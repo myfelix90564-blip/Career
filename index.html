@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>職透 JobSight V3.3.21</title>
+<title>職透 JobSight V3.3.22</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -685,7 +685,7 @@
   <header>
     <div>
       <div class="eyebrow">求職前，先看懂這份職缺</div>
-      <h1>職透<span class="version-badge">V3.3.21</span></h1>
+      <h1>職透<span class="version-badge">V3.3.22</span></h1>
     </div>
     <div class="header-right">
       <div class="header-api-row">
@@ -988,7 +988,10 @@
 </div>
 
 <script>
-/* ---------- v3.3.21：Netlify Identity（Google 登入）門檻 + 後台管理 ---------- */
+/* ---------- v3.3.21：Netlify Identity（Google 登入）門檻 + 後台管理 ----------
+   v3.3.22：修復「登入按鈕點了沒反應、甚至所有按鈕都沒反應」的重大臭蟲，詳見下方兩處修改：
+   (1) pdf.js 的 workerSrc 設定補上 typeof 防呆
+   (2) Google 登入初始化整段包 try/catch，並補上 open/close 事件的疊層防呆 ---------- */
 const ADMIN_EMAIL = 'felix670131@gmail.com';
 window.__zhitouCurrentUser = null;
 
@@ -1032,6 +1035,15 @@ async function uploadResumeToServer(file){
   } catch (e) { console.error('履歷存檔失敗（不影響本次分析使用）', e); }
 }
 
+/* v3.3.22 修復：整個 Google 登入初始化區塊（以及底下每一個事件callback）現在都包在 try/catch 裡。
+   原本這裡完全沒有防護——netlify-identity-widget 的 init() 在瀏覽器已有快取登入狀態時，
+   會「同步」立刻觸發 'init' 事件（這是官方文件記載的行為，不是特例），一旦其中任何一步拋出例外
+   （例如 widget 腳本被擋、對應的 DOM 尚未就緒、或 widget 本身內部的已知錯誤），
+   由於整份檔案只有一個 <script> 標籤、且此區塊執行順序排在最前面，例外會直接中斷後面
+   所有尚未執行的程式碼——包含「使用 Google 帳號登入」按鈕自己的 addEventListener，
+   以及後面每一個功能按鈕的事件綁定。這正是「點擊任何按鈕都毫無反應」的根本原因。
+   加上 try/catch 之後，就算 Google 登入元件本身出問題，也只會影響登入功能，
+   不會拖垮整個工具。 */
 (function(){
   const gate = document.getElementById('authGate');
   const app = document.getElementById('appRoot');
@@ -1058,20 +1070,43 @@ async function uploadResumeToServer(file){
     pill.innerHTML = '';
     window.__zhitouCurrentUser = null;
   }
+  // 每一個 widget callback 都各自包一層 try/catch：單一事件處理失敗時只印出錯誤，
+  // 不會讓例外往外傳播、波及呼叫端（netlify-identity-widget 內部）的其餘執行流程。
+  function safe(fn){
+    return function(...args){
+      try { return fn.apply(this, args); }
+      catch (e){ console.error('Google 登入元件事件處理發生錯誤（不影響其他功能）', e); }
+    };
+  }
 
-  if (window.netlifyIdentity){
-    netlifyIdentity.on('init', user => { if (user){ showApp(user); recordLoginEvent(); } else { showGate(); } });
-    netlifyIdentity.on('login', user => { showApp(user); netlifyIdentity.close(); recordLoginEvent(); });
-    netlifyIdentity.on('logout', () => showGate());
-    netlifyIdentity.init();
-  } else {
-    // Netlify Identity 腳本未載入（例如非部署在 Netlify 上），顯示提示但不硬擋畫面
+  try {
+    if (window.netlifyIdentity){
+      netlifyIdentity.on('init', safe(user => { if (user){ showApp(user); recordLoginEvent(); } else { showGate(); } }));
+      netlifyIdentity.on('login', safe(user => { showApp(user); netlifyIdentity.close(); recordLoginEvent(); }));
+      netlifyIdentity.on('logout', safe(() => showGate()));
+      // v3.3.22：比照後續修復版（hr-resume-matching-mvp）補上的 belt-and-suspenders 修法——
+      // 除了 CSS 的 z-index 強制修正之外，widget 開啟/關閉時主動切換 authGate 的顯示，
+      // 避免已知的 netlify-identity-widget #94 / #67 疊層臭蟲讓登入視窗「開了但看不到」。
+      netlifyIdentity.on('open', safe(() => { gate.style.display = 'none'; }));
+      netlifyIdentity.on('close', safe(() => { if (!window.__zhitouCurrentUser) gate.style.display = 'flex'; }));
+      netlifyIdentity.init();
+    } else {
+      // Netlify Identity 腳本未載入（例如非部署在 Netlify 上，或被瀏覽器擴充功能阻擋），顯示提示但不硬擋畫面
+      gate.querySelector('p').textContent = '無法連線至 Google 登入服務，請確認此網站已部署在 Netlify 並啟用 Identity 服務。';
+    }
+  } catch (e){
+    console.error('Google 登入元件初始化失敗（不影響其他功能）', e);
     gate.querySelector('p').textContent = '無法連線至 Google 登入服務，請確認此網站已部署在 Netlify 並啟用 Identity 服務。';
   }
+
   loginBtn.addEventListener('click', () => {
-    if (window.netlifyIdentity) netlifyIdentity.open('login');
-    // 若 widget 因已知的 z-index 疊層問題而「隱形開啟」，備援連結會在按下後出現，
-    // 讓使用者可以改用直接跳轉的方式登入。
+    try {
+      if (window.netlifyIdentity) netlifyIdentity.open('login');
+    } catch (e){
+      console.error('開啟 Google 登入視窗失敗', e);
+    }
+    // 若 widget 因已知的 z-index 疊層問題而「隱形開啟」，或上面 open() 本身失敗，
+    // 備援連結一律都會在按下後出現，讓使用者可以改用直接跳轉的方式登入，不會卡在毫無反應的狀態。
     const fallback = document.getElementById('authFallbackLink');
     fallback.href = window.location.origin + '/.netlify/identity/authorize?provider=google';
     fallback.style.display = 'block';
@@ -1201,7 +1236,17 @@ async function deleteAdminResume(key){
   } catch (e){ console.error(e); alert('刪除時發生錯誤'); }
 }
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+/* v3.3.22 修復：這一行原本沒有任何保護，若 pdf.js 的 CDN 腳本載入失敗（廣告攔截器、瀏覽器擴充功能、
+   企業網路防火牆濾掉 cdnjs.cloudflare.com、CDN 當機等任何原因），pdfjsLib 就會是 undefined，
+   底下這行會立刻丟出例外，而這個檔案從頭到尾只有「一個」<script> 標籤——例外一丟出，
+   這一行之後所有還沒執行到的程式碼（包含全部 generate 按鈕、拖拉上傳區、下載按鈕等 addEventListener
+   綁定）都不會被執行，導致「按什麼按鈕都沒反應」。加上 typeof 判斷讓它改為安全地跳過並提示，
+   不會拖垮其餘整份腳本。 */
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+} else {
+  console.error('pdf.js 載入失敗（可能被瀏覽器擴充功能或網路環境阻擋），PDF 解析功能將無法使用，但不影響其他功能。');
+}
 
 /* ---------- shared state & helpers ---------- */
 let resumeText = '';

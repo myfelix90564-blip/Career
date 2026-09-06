@@ -1,4 +1,30 @@
-# 職透 (JobSight) V3.3.21 — 後台管理功能部署說明
+# 職透 (JobSight) V3.3.22 — 後台管理功能部署說明
+
+## v3.3.22 更新重點：修復「按鈕點了沒反應」的重大臭蟲
+v3.3.21（及更早版本）有兩處程式碼完全沒有防護，只要其中任一狀況發生，就會讓整份 `index.html`
+唯一的 `<script>` 區塊在執行到一半時直接被 JavaScript 例外中斷，導致**該行之後所有還沒來得及
+註冊的按鈕事件（含 Google 登入按鈕本身）全部失效、點了毫無反應**：
+
+1. **pdf.js 初始化未防呆**：`pdfjsLib.GlobalWorkerOptions.workerSrc = ...` 這一行直接假設
+   pdf.js 的 CDN 腳本一定會成功載入。只要遇到廣告攔截器、瀏覽器隱私擴充功能、企業網路防火牆
+   濾掉 `cdnjs.cloudflare.com`，或 CDN 短暫不穩，`pdfjsLib` 就會是 `undefined`，這行會立刻
+   丟出例外，直接讓後面所有 `addEventListener`（拖拉上傳、每一顆「產生」按鈕、下載按鈕等）
+   都沒有機會被執行。
+2. **Google 登入（Netlify Identity）初始化未防呆**：`netlifyIdentity.init()` 在瀏覽器已有
+   快取登入狀態時，會依官方文件記載「同步」立刻觸發 `init` 事件；只要這個事件處理過程中
+   有任何一步出錯（例如 widget 腳本被瀏覽器擴充功能擋下、或 widget 本身既有的已知疊層錯誤），
+   例外一樣會直接中斷腳本，而且因為這段程式碼在檔案最前面執行，甚至連「使用 Google 帳號登入」
+   按鈕自己的點擊事件都還沒被綁定，所以看起來就是「登入按鈕點了完全沒反應」。
+
+這兩個問題已對照 `hr-resume-matching-mvp`（PDF上傳資料正確穩定版）專案中同類型、已修復過的
+`pdf.js CDN-load crash guard` 與 `Netlify Identity` 防呆寫法，在 v3.3.22 中一併補上：
+- pdf.js 初始化改為 `typeof pdfjsLib !== 'undefined'` 判斷後才執行，載入失敗時只會停用
+  PDF 解析功能，不影響其他按鈕。
+- Google 登入初始化整段包進 `try/catch`，每個事件 callback 也各自有防護，任何一步出錯都只會
+  印出 console 錯誤、不會波及其他功能；同時補上 `open`/`close` 事件的疊層防呆（與已知的
+  `netlify-identity-widget #94 / #67` z-index 臭蟲相同修法），登入按鈕點擊時也一律會顯示
+  備援直接跳轉連結，不會再卡在「毫無反應」的狀態。
+
 
 ## 這個壓縮檔裡有什麼
 ```
