@@ -1,0 +1,3656 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>職透 JobSight V3.3.21</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<style>
+  :root{
+    /* v3.3.7：改版為「動線導引」設計系統（原「印信紙感」配色已全面替換） */
+    --paper:#F7F8FA;
+    --panel:#EEF0F5;
+    --panel-2:#FFFFFF;
+    --ink:#10151F;
+    --ink-soft:#69707E;
+    --seal:#5B4FE0;
+    --seal-dark:#4636B8;
+    --brass:#8A7CE0;
+    --line:#E2E5EA;
+    --ok:#1FAA7A;
+    --warn:#C9822D;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Manrope','Noto Sans TC', sans-serif;
+    min-height:100vh;
+    padding:40px 20px 80px;
+  }
+  .wrap{max-width:1120px;margin:0 auto;}
+
+  header{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:22px;
+    margin-bottom:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:.12em;
+    color:var(--brass);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Manrope','Noto Sans TC', sans-serif;
+    font-weight:800;
+    font-size:clamp(26px,4vw,40px);
+    margin:0;
+    letter-spacing:.01em;
+  }
+  .version-badge{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.04em;
+    color:var(--brass);
+    border:1px solid var(--brass);
+    border-radius:10px;
+    padding:2px 7px;
+    margin-left:10px;
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+  .draft-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    background:rgba(138,124,224,0.12); border:1px solid var(--brass); color:var(--ink);
+    padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:13.5px; line-height:1.6;
+  }
+  .draft-banner-actions{ display:flex; gap:10px; flex-shrink:0; }
+  .tagline{
+    font-family:'Noto Sans TC', sans-serif;
+    color:var(--ink-soft);
+    font-size:14px;
+    max-width:300px;
+    line-height:1.6;
+    text-align:right;
+  }
+  @media (max-width:640px){ .tagline{text-align:left; max-width:100%;} }
+
+  /* v3.3.8：API Key 設定改為併入 header 右上角的精簡列，取代原本佔一整列的按鈕＋提示 */
+  .header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  @media (max-width:640px){ .header-right{ align-items:flex-start; width:100%; } }
+  .header-api-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  @media (max-width:640px){ .header-api-row{ justify-content:flex-start; } }
+  .header-api-link{
+    background:transparent; border:1px solid var(--line); border-radius:8px; padding:5px 10px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:700; color:var(--ink-soft);
+    cursor:pointer; white-space:nowrap;
+  }
+  .header-api-link:hover{ border-color:var(--brass); color:var(--ink); background:var(--panel); }
+
+  /* debug panel（v3.3.8：移到頁尾） */
+  .debug-toggle-row{ margin-bottom:14px; text-align:center; }
+  .footer-dev-info{ margin-right:10px; color:var(--ink-soft); }
+
+  /* ---- v3.3.12：Google（Netlify Identity）登入門檻 ---- */
+  #authGate{
+    position:fixed; inset:0; z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg, #f4f2ec);
+    padding:24px;
+  }
+  #authGate .auth-box{
+    max-width:420px; width:100%; text-align:center;
+    background:#fff; border:1px solid var(--ink-soft, #ccc);
+    border-radius:12px; padding:36px 28px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.08);
+  }
+  #authGate h2{ margin:0 0 12px; font-size:20px; }
+  #authGate p{ margin:0 0 24px; font-size:14px; color:var(--ink-soft, #666); line-height:1.7; }
+  #authGate button{
+    font-family:inherit; font-size:15px; font-weight:600;
+    padding:12px 20px; border-radius:8px; border:none;
+    background:#1a73e8; color:#fff; cursor:pointer; width:100%;
+  }
+  #authGate button:hover{ background:#1558b0; }
+  #authGate .auth-note{ margin-top:16px; font-size:11.5px; color:var(--ink-soft, #999); }
+  .auth-fallback-link{ display:block; margin-top:10px; font-size:12.5px; color:#1a73e8; text-decoration:underline; cursor:pointer; }
+  /* v3.3.14：修復 Netlify Identity 已知臭蟲（netlify/netlify-identity-widget #94, #67）—
+     登入 iframe 若遇到頁面上其他高 z-index 的 position:fixed 全螢幕元素（此處為 #authGate）
+     會被蓋在下面而完全看不到，即使它其實有正常開啟。強制把 widget 蓋過所有東西。
+     頁面本身不使用任何 iframe，因此可以安全地用 body > iframe 這個選擇器鎖定 widget。 */
+  body > iframe,
+  .netlify-identity-widget,
+  #netlify-identity-widget{ z-index:2147483647 !important; }
+  #appRoot{ display:none; }
+  .user-status-pill{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--ink-soft, #666);
+  }
+  .user-status-pill button{
+    font-family:inherit; font-size:12px; cursor:pointer;
+    border:1px solid var(--ink-soft, #ccc); background:none;
+    border-radius:6px; padding:2px 8px;
+  }
+  .admin-modal-box{ max-width:920px; width:95vw; max-height:85vh; overflow:auto; }
+  .admin-section-title{ font-weight:700; margin:12px 0 8px; }
+  .admin-table-wrap{ overflow-x:auto; }
+  table.admin-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.admin-table th, table.admin-table td{
+    border:1px solid var(--ink-soft, #ddd); padding:6px 8px; text-align:left; vertical-align:top;
+  }
+  table.admin-table th{ background:rgba(0,0,0,0.04); }
+  .admin-ua{ max-width:220px; word-break:break-all; }
+  .admin-file-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
+  .admin-file-row span:first-child{ max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admin-file-meta{ color:var(--ink-soft, #999); font-size:11px; }
+  .admin-file-row button{ font-family:inherit; font-size:11px; cursor:pointer; border:1px solid var(--ink-soft,#ccc); background:none; border-radius:5px; padding:1px 6px; }
+  .footer-debug-toggle{ margin-top:16px; margin-bottom:0; }
+  .debug-panel{
+    background:var(--ink); color:#D9DCE6; border-radius:10px; padding:14px 16px; margin-bottom:20px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px;
+    text-align:left;
+  }
+  footer .debug-panel{ margin-top:14px; margin-bottom:0; max-width:760px; margin-left:auto; margin-right:auto; }
+  .debug-panel-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; flex-wrap:wrap; }
+  .debug-panel-header .debug-actions{ display:flex; gap:8px; }
+  .debug-panel pre{ max-height:280px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; margin:0; }
+  .debug-note{ color:#B8AE94; font-size:11px; margin-bottom:8px; }
+
+  /* ---------- API 設定（多供應商 API Key） ---------- */
+  .api-status-pill{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-soft);
+    border:1px solid var(--line); border-radius:10px; padding:6px 10px; background:var(--panel-2);
+  }
+  .api-status-pill.on{ color:var(--ok); border-color:var(--ok); }
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(31,42,60,.55); display:none;
+    align-items:center; justify-content:center; z-index:10000; padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-box{
+    background:var(--panel-2); border:1px solid var(--ink); border-radius:10px;
+    max-width:520px; width:100%; max-height:86vh; overflow-y:auto; padding:24px 26px;
+    box-shadow:0 18px 50px rgba(31,42,60,.35);
+  }
+  .modal-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .modal-head h3{ font-family:'Manrope','Noto Sans TC', sans-serif; font-weight:800; font-size:18px; color:var(--ink); margin:0; }
+  .modal-close{ background:none; border:none; font-size:18px; color:var(--ink-soft); cursor:pointer; line-height:1; padding:4px 6px; }
+  .modal-close:hover{ color:var(--seal); }
+  .modal-box p.desc{ font-size:13px; color:var(--ink-soft); line-height:1.7; margin:0 0 16px; }
+  .provider-tabs{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .provider-tab-btn{
+    flex:1; min-width:100px; padding:9px 6px; border:1px solid var(--line); border-radius:10px;
+    background:var(--panel); font-family:'Noto Sans TC', sans-serif; font-size:12.5px; font-weight:700;
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .provider-tab-btn:hover{ border-color:var(--brass); }
+  .provider-tab-btn.active{ border-color:var(--ink); background:var(--panel-2); color:var(--ink); }
+  .provider-pane{ margin-bottom:6px; }
+  .form-group{ margin-bottom:12px; }
+  .form-label{ display:block; font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:700; color:var(--ink); margin-bottom:6px; letter-spacing:.02em; }
+  .form-ctrl{
+    width:100%; border:1px solid var(--line); background:#fff; color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-size:13px; padding:9px 10px; border-radius:10px;
+  }
+  .form-ctrl:focus{ outline:none; border-color:var(--brass); }
+  .form-hint{ font-size:11.5px; color:var(--ink-soft); line-height:1.6; margin:6px 0 0; }
+  .modal-current-mode{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
+  .modal-current-mode b{ color:var(--ok); }
+  .modal-foot{ display:flex; justify-content:space-between; gap:10px; margin-top:16px; }
+
+  /* global resume upload */
+  .panel{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 24px 24px;
+    position:relative;
+  }
+  .field-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex; justify-content:space-between; margin-bottom:10px;
+  }
+  textarea{
+    width:100%; min-height:120px; resize:vertical;
+    border:1px solid var(--line); background:var(--panel); color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif; font-size:14.5px; line-height:1.7;
+    padding:14px; border-radius:10px;
+  }
+  textarea:focus, input:focus, button:focus, select:focus{ outline:2px solid var(--seal); outline-offset:2px; }
+  textarea::placeholder{color:#9a9584;}
+
+  .upload-row{ display:grid; grid-template-columns:1.1fr .9fr; gap:24px; align-items:start; }
+  @media (max-width:760px){ .upload-row{grid-template-columns:1fr;} }
+
+  .shared-jd-block{ margin-top:22px; padding-top:20px; border-top:1px dashed var(--line); }
+  .tool-note{ font-size:12.5px; color:var(--ink-soft); line-height:1.7; margin:10px 0 0; }
+  .tool-panel{ padding-bottom:20px; }
+
+  .dropzone{
+    border:1.5px dashed var(--brass); border-radius:10px; background:var(--panel);
+    padding:20px 16px; text-align:center; cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{ background:#EBE9FB; border-color:var(--seal); }
+  .dropzone .icon{font-size:24px; display:block; margin-bottom:6px;}
+  .dropzone .dz-title{font-weight:700; font-size:14px;}
+  .dropzone .dz-sub{font-size:12px; color:var(--ink-soft); margin-top:3px;}
+  .file-chip{
+    margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--panel); border:1px solid var(--line); padding:9px 12px; border-radius:10px;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px;
+  }
+  .file-chip button{ background:none;border:none;color:var(--seal);cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:12px; text-decoration:underline; }
+  input[type=file]{display:none;}
+
+  /* v3.2.15：PDF 擷取文字預覽（前 150 字…後 150 字），讓使用者確認擷取是否完整 */
+  .pdf-preview-box{
+    margin-top:10px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-soft);
+    line-height:1.7; white-space:pre-wrap; word-break:break-all;
+  }
+  .pdf-preview-box .ppb-label{ display:block; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .pdf-preview-box .ppb-ellipsis{ color:var(--brass); font-weight:700; }
+  .pdf-preview-toggle{
+    background:none; border:none; color:var(--brass); cursor:pointer; font-family:'JetBrains Mono', monospace;
+    font-size:11.5px; text-decoration:underline; margin-top:6px; padding:0; display:inline-block;
+  }
+
+  /* v3.2.15：需單獨生成的功能提示（客製履歷／提案簡報，因較耗 tokens 不列入一鍵產生） */
+  .standalone-note{
+    font-size:12.5px; color:var(--seal-dark); line-height:1.7; margin:10px 0 0;
+    background:rgba(91,79,224,0.08); border:1px solid var(--seal); border-radius:10px; padding:9px 12px;
+  }
+
+  /* v3.3.2：客製履歷 5 款排版版型（畫面預覽 + 列印匯出共用樣式，PDF 用瀏覽器原生列印產生）。
+     架構樣式一律吃 --re-* 這組 CSS 變數（比照提案簡報 --deck-* 的做法），
+     5 個版型只需覆寫變數＋layout 結構即可切換視覺，不需要重新產生內容 ——
+     使用者可以在同一份履歷內容上，任意切換版型比較效果。
+     其中 3 款（顧問經典／瑞士極簡／東方雅緻）為單欄結構，僅變數不同；
+     企業商務為雙欄側邊結構；科技新創為深色標題列結構，兩者皆需額外的
+     容器 class（layout-sidebar／layout-darkband）搭配 JS 產生對應 DOM。 */
+  .resume-export{
+    --re-bg:#fff; --re-fg:#1a1a1a; --re-muted:#666; --re-accent:#9C7A3C; --re-accent2:#1F2A3C;
+    --re-border:#ddd; --re-heading-font:'Noto Serif TC', serif; --re-body-font:'Noto Sans TC', sans-serif;
+    background:var(--re-bg); color:var(--re-fg); font-family:var(--re-body-font); font-size:13px; line-height:1.65;
+    max-width:760px; margin:16px auto 0; padding:30px 36px; border:1px solid var(--re-border);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .resume-export.theme-mckinsey{ --re-fg:#1B2A4A; --re-muted:#5b6b85; --re-accent:#B8934A; --re-accent2:#1B2A4A; --re-border:#dde2ea; }
+  .resume-export.theme-corpblue{ --re-fg:#0B2545; --re-muted:#5b6b7d; --re-accent:#0B5FCC; --re-accent2:#083A80; --re-border:#d7e3f2; }
+  .resume-export.theme-techdark{ --re-bg:#12141A; --re-fg:#EDEDED; --re-muted:#9aa3af; --re-accent:#3FD0FF; --re-accent2:#7B5CFA; --re-border:#2a2e38; --re-heading-font:'Noto Sans TC', sans-serif; }
+  .resume-export.theme-swiss{ --re-fg:#0A0A0A; --re-muted:#555; --re-accent:#0A0A0A; --re-accent2:#0A0A0A; --re-border:#0A0A0A; --re-heading-font:'Noto Sans TC', sans-serif; }
+  .resume-export.theme-sealgold{ --re-bg:#F6F1E7; --re-fg:#1F2A3C; --re-muted:#6b6255; --re-accent:#9C7A3C; --re-accent2:#B03A2E; --re-border:#D9CFB8; }
+
+  .resume-export h1{ font-size:22px; margin:0 0 4px; font-family:var(--re-heading-font); color:var(--re-fg); }
+  .re-target-title{ font-size:14px; color:var(--re-fg); opacity:.85; margin-bottom:8px; }
+  .re-contact{ font-size:12px; color:var(--re-muted); margin-bottom:14px; }
+  .re-section-title{
+    font-size:13.5px; font-weight:900; border-bottom:2px solid var(--re-accent2); padding-bottom:4px;
+    margin:16px 0 8px; letter-spacing:.05em; color:var(--re-fg);
+  }
+  .re-summary{ font-size:13px; margin:0 0 6px; }
+  .re-skills{ display:flex; flex-wrap:wrap; gap:6px; }
+  .re-skill-chip{ border:1px solid var(--re-muted); border-radius:2px; padding:2px 8px; font-size:11.5px; color:var(--re-fg); }
+  .re-job{ margin-bottom:12px; }
+  .re-job-head{ display:flex; justify-content:space-between; gap:10px; font-weight:700; font-size:13.5px; color:var(--re-fg); }
+  .re-job-period{ font-size:11.5px; color:var(--re-muted); white-space:nowrap; }
+  .re-job ul{ margin:6px 0 0; padding-left:18px; }
+  .re-job li{ margin-bottom:3px; }
+  .re-footer-note{ margin-top:20px; font-size:10.5px; color:var(--re-muted); border-top:1px solid var(--re-border); padding-top:8px; }
+  .change-notes-box{ margin-top:16px; padding:12px 14px; background:var(--panel); border-left:3px solid var(--brass); font-size:12.5px; line-height:1.7; }
+  .change-notes-box .cn-title{ font-weight:700; color:var(--ink); display:block; margin-bottom:6px; }
+
+  /* 企業商務版：雙欄側邊結構 */
+  .resume-export.layout-sidebar{ display:flex; gap:0; max-width:820px; padding:0; }
+  .resume-export.layout-sidebar .re-sidebar{
+    width:220px; flex:none; background:var(--re-accent2); color:#fff; padding:30px 22px; box-sizing:border-box;
+  }
+  .resume-export.layout-sidebar .re-main{ flex:1; padding:30px 32px; box-sizing:border-box; min-width:0; }
+  .resume-export.layout-sidebar .re-sidebar h1{ color:#fff; font-size:19px; }
+  .resume-export.layout-sidebar .re-sidebar .re-target-title,
+  .resume-export.layout-sidebar .re-sidebar .re-contact{ color:rgba(255,255,255,.8); }
+  .resume-export.layout-sidebar .re-sidebar .re-section-title{ color:#fff; border-bottom-color:rgba(255,255,255,.4); }
+  .resume-export.layout-sidebar .re-sidebar .re-skill-chip{ border-color:rgba(255,255,255,.5); color:#fff; }
+  .resume-export.layout-sidebar .re-main .re-footer-note{ border-top:1px solid var(--re-border); }
+
+  /* 科技新創版：頂部深色標題列結構 */
+  .resume-export.layout-darkband{ padding:0 36px 30px; }
+  .resume-export.layout-darkband .re-header-band{
+    background:var(--re-accent2); color:#fff; margin:0 -36px 20px; padding:26px 36px 20px; box-sizing:border-box;
+  }
+  .resume-export.layout-darkband .re-header-band h1{ color:#fff; }
+  .resume-export.layout-darkband .re-header-band .re-target-title,
+  .resume-export.layout-darkband .re-header-band .re-contact{ color:rgba(255,255,255,.85); margin-bottom:0; }
+
+  /* v3.3.0：提案簡報（8~10 頁投影片，5 款世界級企業版型可選，畫面預覽 + 列印匯出）
+     設計方式：結構樣式一律吃 --deck-* 這組 CSS 變數，5 個版型只需覆寫變數即可切換視覺，
+     不需要重新產生內容 —— 使用者可以在同一份簡報內容上，任意切換版型比較效果。 */
+  .slides-export{
+    --deck-bg:#fff; --deck-fg:#1a1a1a; --deck-muted:#666; --deck-accent:#9C7A3C; --deck-accent2:#1F2A3C;
+    --deck-border:#D9CFB8; --deck-heading-font:'Noto Serif TC', serif; --deck-body-font:'Noto Sans TC', sans-serif;
+    --deck-bar:linear-gradient(90deg, var(--deck-accent2), var(--deck-accent));
+    max-width:900px; margin:16px auto 0;
+  }
+  .slides-export.theme-mckinsey{ --deck-bg:#fff; --deck-fg:#1B2A4A; --deck-muted:#5b6b85; --deck-accent:#B8934A; --deck-accent2:#1B2A4A; --deck-border:#dde2ea; }
+  .slides-export.theme-corpblue{ --deck-bg:#fff; --deck-fg:#0B2545; --deck-muted:#5b6b7d; --deck-accent:#0B5FCC; --deck-accent2:#083A80; --deck-border:#d7e3f2; }
+  .slides-export.theme-techdark{ --deck-bg:#12141A; --deck-fg:#EDEDED; --deck-muted:#9aa3af; --deck-accent:#3FD0FF; --deck-accent2:#7B5CFA; --deck-border:#2a2e38; --deck-heading-font:'Noto Sans TC', sans-serif; }
+  .slides-export.theme-swiss{ --deck-bg:#fff; --deck-fg:#0A0A0A; --deck-muted:#555; --deck-accent:#0A0A0A; --deck-accent2:#0A0A0A; --deck-border:#0A0A0A; --deck-heading-font:'Noto Sans TC', sans-serif; --deck-bar:#0A0A0A; }
+  .slides-export.theme-sealgold{ --deck-bg:#F6F1E7; --deck-fg:#1F2A3C; --deck-muted:#6b6255; --deck-accent:#9C7A3C; --deck-accent2:#B03A2E; --deck-border:#D9CFB8; }
+
+  .slide-page-wrap{ margin-bottom:18px; }
+  .slide-page{
+    width:100%; aspect-ratio:16/9; background:var(--deck-bg); color:var(--deck-fg); box-sizing:border-box;
+    padding:44px 54px 40px; display:flex; flex-direction:column; justify-content:center;
+    border:1px solid var(--deck-border); position:relative;
+    font-family:var(--deck-body-font);
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .slide-page::before{ content:''; position:absolute; left:0; top:0; width:100%; height:5px; background:var(--deck-bar); }
+  .slide-heading{ font-size:24px; font-weight:900; font-family:var(--deck-heading-font); color:var(--deck-fg); margin:0 0 14px; }
+  .slide-subheading{ font-size:15px; color:var(--deck-muted); margin-top:8px; }
+  .slide-title-layout{ align-items:flex-start; }
+  .slide-title-layout .slide-heading{ font-size:32px; }
+  .slide-bullets-layout .slide-heading{ border-bottom:2px solid var(--deck-accent); padding-bottom:8px; }
+  .slide-bullets-layout ul{ font-size:15.5px; line-height:1.85; padding-left:22px; margin:0; }
+  .slide-bullets-layout li::marker{ color:var(--deck-accent); }
+  .slide-two-col{ display:flex; gap:30px; }
+  .slide-two-col .col{ flex:1; }
+  .slide-two-col .col-title{ font-weight:700; font-size:14px; margin-bottom:8px; color:var(--deck-fg); }
+  .slide-two-col ul{ font-size:13.5px; line-height:1.75; padding-left:18px; margin:0; }
+  .slide-two-col li::marker{ color:var(--deck-accent); }
+  .slide-quote-layout{ align-items:center; text-align:center; }
+  .slide-quote-text{ font-size:20px; font-style:italic; color:var(--deck-fg); line-height:1.6; }
+  .slide-quote-attr{ margin-top:14px; font-size:13px; color:var(--deck-muted); }
+  .slide-number{ position:absolute; bottom:14px; right:20px; font-size:11px; color:var(--deck-muted); font-family:'JetBrains Mono', monospace; }
+
+  /* 個人亮點：KPI 數字卡 */
+  .slide-stat-grid{ display:flex; gap:20px; margin-top:8px; }
+  .slide-stat-card{ flex:1; border:1px solid var(--deck-border); border-radius:4px; padding:16px 12px; text-align:center; }
+  .slide-stat-num{ font-size:32px; font-weight:900; color:var(--deck-accent); font-family:'JetBrains Mono', monospace; line-height:1; }
+  .slide-stat-label{ font-size:12px; color:var(--deck-muted); margin-top:8px; line-height:1.5; }
+  .slide-highlight-note{ font-size:13px; color:var(--deck-muted); margin-top:14px; }
+
+  /* 痛點洞察 */
+  .slide-painpoint-list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:11px; }
+  .slide-painpoint-list li{ display:flex; align-items:flex-start; gap:10px; font-size:15px; line-height:1.6; }
+  .slide-painpoint-list li::before{ content:'⚑'; color:var(--deck-accent2); flex:none; font-size:13px; margin-top:2px; }
+
+  /* 提案（痛點 → 對策） */
+  .slide-solution-list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:13px; }
+  .slide-solution-row{ display:flex; align-items:center; gap:14px; font-size:14px; line-height:1.55; }
+  .slide-solution-problem{ flex:1; color:var(--deck-muted); }
+  .slide-solution-arrow{ color:var(--deck-accent); font-weight:900; flex:none; font-size:16px; }
+  .slide-solution-action{ flex:1; color:var(--deck-fg); font-weight:700; }
+
+  /* 30-60-90 天計畫 */
+  .slide-plan-cols{ display:flex; gap:20px; margin-top:6px; }
+  .slide-plan-col{ flex:1; border-top:3px solid var(--deck-accent); padding-top:10px; }
+  .slide-plan-col-title{ font-weight:900; font-size:13.5px; margin-bottom:8px; color:var(--deck-fg); }
+  .slide-plan-col ul{ font-size:12px; line-height:1.65; padding-left:16px; margin:0; color:var(--deck-fg); }
+
+  /* 能力佐證 */
+  .slide-proof-list{ display:flex; flex-direction:column; gap:12px; }
+  .slide-proof-item{ border-left:3px solid var(--deck-accent); padding-left:12px; }
+  .slide-proof-title{ font-weight:700; font-size:14.5px; }
+  .slide-proof-result{ font-size:13px; color:var(--deck-muted); margin-top:2px; }
+
+  /* 版型挑選卡片（產生前） */
+  .deck-template-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(148px,1fr)); gap:10px; margin:12px 0 4px; }
+  .deck-template-card{ border:2px solid var(--line); border-radius:10px; padding:10px; cursor:pointer; background:var(--panel-2); transition:border-color .15s; }
+  .deck-template-card:hover{ border-color:var(--brass); }
+  .deck-template-card.selected{ border-color:var(--seal); box-shadow:0 0 0 1px var(--seal) inset; }
+  .dtc-swatch{ height:50px; border-radius:10px; margin-bottom:8px; position:relative; overflow:hidden; }
+  .dtc-swatch span{ position:absolute; left:8px; height:5px; border-radius:1px; }
+  .dtc-name{ font-size:12.5px; font-weight:700; color:var(--ink); }
+  .dtc-desc{ font-size:10.5px; color:var(--ink-soft); margin-top:3px; line-height:1.55; }
+
+  /* 產生後：更換版型的精簡列（不需重新產生） */
+  .deck-theme-switch-wrap{ margin:0 0 14px; }
+  .deck-theme-switch-label{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px; display:block; }
+  .deck-theme-switch{ display:flex; gap:8px; flex-wrap:wrap; }
+  .deck-theme-switch button{
+    font-size:11.5px; padding:6px 11px; border:1px solid var(--line); background:#fff; color:var(--ink-soft);
+    border-radius:10px; cursor:pointer; font-family:'Noto Sans TC', sans-serif;
+  }
+  .deck-theme-switch button:hover{ border-color:var(--brass); }
+  .deck-theme-switch button.active{ border-color:var(--seal); color:var(--seal); font-weight:700; }
+  .dt7-extra-textarea{ min-height:64px; font-size:13px; }
+
+  /* v3.3.1：以瀏覽器原生「列印」產生 PDF（可完整支援中文字型，不需額外嵌入字型檔）。
+     列印時只顯示要匯出的那一份內容，其餘畫面全部隱藏。
+     修正：break-after 改套用在「非 flex 容器」的外層 wrapper 上，避免 Chrome 對
+     display:flex 元素本身的分頁換頁 bug（曾導致 8 頁投影片列印只剩 3 頁、部分頁面空白）；
+     列印時投影片改用 100vh 固定高度，不再依賴 aspect-ratio 換算，避免列印分頁引擎誤判尺寸。
+     v3.3.4 修正（重大）：#resumeExportArea／#slidesExportArea 的父容器 .results-panel
+     平時為了「載入中置中效果」而設定 position:relative + overflow:hidden；這會讓子層原本
+     想用 position:absolute 拉到「整個頁面」左上角的匯出內容，變成相對於「.results-panel
+     自己（且已被 overflow:hidden 裁切、可視範圍極小）」定位，導致列印/另存 PDF 時整份
+     履歷或簡報整個消失不見、只剩下好幾頁全空白（05 客製履歷、06 提案簡報皆受影響）。
+     列印時明確解除這兩個屬性即可修復。另外 @page 的直向/橫向已改由 JS 依模式動態插入
+     （見 printExportArea），履歷維持直向 A4，簡報維持橫向，不再固定寫死橫向。 */
+  @media print {
+    body.printing-resume-mode .results-panel,
+    body.printing-slides-mode .results-panel{
+      position:static !important;
+      overflow:visible !important;
+    }
+
+    body.printing-resume-mode *{ visibility:hidden; }
+    body.printing-resume-mode #resumeExportArea,
+    body.printing-resume-mode #resumeExportArea *{ visibility:visible; }
+    body.printing-resume-mode #resumeExportArea{ position:absolute; left:0; top:0; width:100%; border:none; margin:0; }
+
+    body.printing-slides-mode *{ visibility:hidden; }
+    body.printing-slides-mode #slidesExportArea,
+    body.printing-slides-mode #slidesExportArea *{ visibility:visible; }
+    body.printing-slides-mode #slidesExportArea{ position:absolute; left:0; top:0; width:100%; max-width:none; margin:0; }
+    body.printing-slides-mode .slide-page-wrap{
+      margin:0; break-after:page; page-break-after:always; break-inside:avoid; page-break-inside:avoid;
+    }
+    body.printing-slides-mode .slide-page-wrap:last-child{ break-after:auto; page-break-after:auto; }
+    body.printing-slides-mode .slide-page{
+      width:100%; height:100vh; aspect-ratio:auto; border:none; margin:0;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+  }
+
+  /* tabs：v3.3.7 改為「動線導引」水平步驟列，六個工具＝一段真實的使用流程 */
+  .tabs{ display:flex; align-items:flex-start; gap:2px; margin:32px 0 28px; border-bottom:none; }
+  .tab-btn{
+    flex:1; min-width:80px; display:flex; flex-direction:column; align-items:center; gap:8px;
+    background:none; border:none; padding:4px 2px 0; cursor:pointer; position:relative;
+    font-family:'Manrope','Noto Sans TC', sans-serif;
+  }
+  .tab-btn:not(:last-child)::before{
+    content:''; position:absolute; top:15px; left:calc(50% + 17px); width:calc(100% - 34px);
+    height:2px; background:var(--line); z-index:0;
+  }
+  .step-num{
+    width:30px; height:30px; border-radius:50%; background:var(--panel-2); border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;
+    color:var(--ink-soft); position:relative; z-index:1;
+  }
+  .step-label{ font-size:12px; color:var(--ink-soft); text-align:center; line-height:1.35; }
+  .tab-btn.active .step-num{ border-color:var(--seal); color:var(--seal); background:#fff; }
+  .tab-btn.active .step-label{ color:var(--ink); font-weight:700; }
+  .tab-btn:hover .step-num{ border-color:var(--brass); }
+  .tab-dot{
+    display:none; position:absolute; top:-3px; right:-3px; width:10px; height:10px;
+    border-radius:50%; border:2px solid var(--panel-2);
+  }
+  .tab-dot.show{ display:block; }
+  .tab-dot.done{ background:var(--ok); }
+  .tab-dot.stale{ background:var(--warn); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .cta-row{ margin-top:18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  button.primary{
+    background:var(--seal); color:#fff; border:none;
+    font-family:'Manrope','Noto Sans TC', sans-serif; font-weight:700; font-size:14.5px;
+    padding:13px 24px; border-radius:10px; cursor:pointer; letter-spacing:.01em;
+    transition:background .15s ease, transform .1s ease;
+  }
+  button.primary:hover:not(:disabled){background:var(--seal-dark);}
+  button.primary:active:not(:disabled){transform:translateY(1px);}
+  button.primary:disabled{background:#C7CBD3; cursor:not-allowed;}
+  button.ghost{
+    background:transparent; border:1px dashed var(--brass); color:var(--brass);
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:8px 12px; border-radius:10px; cursor:pointer;
+  }
+  button.ghost:hover{background:var(--panel);}
+  button.secondary{
+    background:transparent; border:1px solid var(--ink); color:var(--ink);
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:9px 14px; border-radius:10px; cursor:pointer;
+  }
+  button.secondary:hover{background:var(--ink); color:#fff;}
+  button.small-x{ background:none; border:none; color:var(--seal); cursor:pointer; font-size:16px; line-height:1; padding:2px 6px; }
+
+  select{
+    border:1px solid var(--line); background:var(--panel); color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif; font-size:14px; padding:10px 12px; border-radius:10px;
+  }
+
+  .status-line{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-soft); }
+  .status-line.err{color:var(--seal);}
+  .spinner{ display:inline-block; width:12px; height:12px; border:2px solid var(--line); border-top-color:var(--seal); border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:-1px; }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .results-panel{ margin-top:20px; position:relative; overflow:hidden; }
+  .results-panel.empty{ display:flex; align-items:center; justify-content:center; min-height:150px; background:none; border:1px dashed var(--line); }
+  .results-panel.empty::before{display:none;}
+  .placeholder{ text-align:center; color:var(--ink-soft); font-size:13.5px; max-width:380px; line-height:1.7; }
+  .placeholder .icon{font-size:26px; display:block; margin-bottom:8px;}
+
+  .stale-banner{
+    display:none; margin-top:16px; padding:10px 14px; border-radius:10px;
+    background:rgba(201,130,45,0.12); border:1px solid var(--warn); color:var(--warn);
+    font-size:13px; line-height:1.6;
+  }
+  .stale-banner.show{ display:block; }
+
+  h2.section-title{
+    font-family:'Manrope','Noto Sans TC', sans-serif; font-size:16px; font-weight:700; margin:0 0 14px;
+    padding-bottom:8px; border-bottom:1px solid var(--line);
+  }
+
+  /* tab1 results */
+  .results-grid{ display:grid; grid-template-columns: 1fr 1.4fr; gap:30px; }
+  @media (max-width:860px){ .results-grid{grid-template-columns:1fr;} }
+  ul.match-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+  ul.match-list li{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.6; background:var(--panel); border:1px solid var(--line); padding:10px 12px; border-radius:10px; }
+  ul.match-list li .dot{ width:6px; height:6px; margin-top:7px; flex:none; background:var(--seal); border-radius:50%; }
+  .letter-box{position:relative;}
+  textarea#coverLetter{min-height:320px; font-size:14.5px; line-height:1.85;}
+  .letter-actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:center; }
+  .char-count{ margin-left:auto; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-soft); }
+  .seal{
+    position:absolute; top:18px; right:18px; padding:10px 16px; border-radius:999px;
+    border:1px solid var(--seal); display:flex; align-items:center; justify-content:center;
+    color:var(--seal); font-family:'Manrope','Noto Sans TC', sans-serif; font-weight:700; font-size:12px; letter-spacing:.02em;
+    transform:scale(0); opacity:0; pointer-events:none; background:rgba(91,79,224,0.08);
+  }
+  .seal span{text-align:center; line-height:1.3;}
+  .seal.show{ animation: stamp .4s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes stamp{
+    0%{transform:scale(0.6); opacity:0;}
+    70%{transform:scale(1.05); opacity:1;}
+    100%{transform:scale(1); opacity:1;}
+  }
+
+  /* tier badge */
+  .score-block{ display:flex; align-items:center; gap:20px; margin-bottom:22px; flex-wrap:wrap; }
+  .score-number{ font-family:'Manrope','Noto Sans TC', sans-serif; font-weight:800; font-size:52px; color:var(--ink); line-height:1; }
+  .score-number sub{ font-family:'JetBrains Mono', monospace; font-size:15px; color:var(--ink-soft); }
+  .score-bar-wrap{ flex:1; min-width:180px; }
+  .score-bar{ height:10px; background:var(--panel); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .score-bar-fill{ height:100%; background:linear-gradient(90deg, var(--seal), var(--brass)); border-radius:6px; transition:width .5s ease; }
+  .score-bar-fill.tier-high{ background:var(--ok); }
+  .score-bar-fill.tier-good{ background:var(--brass); }
+  .score-bar-fill.tier-mid{ background:var(--warn); }
+  .score-bar-fill.tier-low{ background:var(--seal); }
+  .score-bar-fill.tier-verylow{ background:var(--seal-dark); }
+  .score-label{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-soft); margin-top:6px; }
+  .tier-badge{
+    display:inline-block; margin-top:9px; padding:5px 13px; border-radius:20px;
+    font-family:'Noto Sans TC', sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.02em;
+  }
+  .tier-badge.tier-high{ background:rgba(31,170,122,0.12); color:var(--ok); border:1px solid var(--ok); }
+  .tier-badge.tier-good{ background:rgba(138,124,224,0.14); color:var(--brass); border:1px solid var(--brass); }
+  .tier-badge.tier-mid{ background:rgba(201,130,45,0.15); color:var(--warn); border:1px solid var(--warn); }
+  .tier-badge.tier-low{ background:rgba(91,79,224,0.10); color:var(--seal); border:1px solid var(--seal); }
+  .tier-badge.tier-verylow{ background:rgba(70,54,184,0.14); color:var(--seal-dark); border:1px solid var(--seal-dark); }
+  .score-reason{ font-size:13px; color:var(--ink-soft); line-height:1.6; margin-top:8px; max-width:520px; }
+  .check-cols{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+  @media (max-width:860px){ .check-cols{grid-template-columns:1fr;} }
+  .check-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .check-list li{ font-size:13px; line-height:1.6; background:var(--panel); border:1px solid var(--line); padding:8px 10px; border-radius:10px; }
+
+  .reverse-block{ margin-top:26px; padding-top:22px; border-top:1px dashed var(--line); }
+  .reverse-block textarea{ min-height:80px; }
+  .reverse-q-card{ border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:14px; margin-bottom:12px; }
+  .reverse-q-num{ font-family:'Manrope','Noto Sans TC', sans-serif; font-weight:800; color:var(--seal); font-size:14px; margin-right:6px; }
+  .reverse-q-purpose{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--brass); margin-top:6px; }
+  .risk-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .risk-list li{ font-size:13px; line-height:1.6; background:rgba(201,130,45,0.10); border:1px solid var(--warn); color:var(--ink); padding:9px 12px; border-radius:10px; }
+  .competency-box{ margin-top:16px; padding:12px 14px; background:var(--panel); border-left:3px solid var(--ink); font-size:13.5px; line-height:1.7; }
+
+  /* tab4(interview) */
+  .q-card{ border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .q-title{ font-weight:700; font-size:14.5px; margin-bottom:4px; }
+  .q-gap{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--brass); margin-bottom:10px; }
+  .q-card textarea{ min-height:80px; font-size:13.5px; margin-bottom:8px; }
+  .feedback-box{ margin-top:10px; padding:10px 12px; background:var(--panel-2); border-left:3px solid var(--seal); font-size:13px; line-height:1.6; display:none; }
+  .feedback-box.show{display:block;}
+
+  /* v3.3.8：模擬面試改為「AI 建議回答」為主、使用者自行輸入為輔 */
+  .suggested-answer-box{
+    background:#F4F2FD; border:1px solid var(--brass); border-radius:10px; padding:12px 14px 14px; margin-bottom:14px;
+  }
+  .suggested-answer-header{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  .suggested-answer-label{ font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:700; color:var(--seal-dark); }
+  .suggested-answer-text{ font-size:14px; line-height:1.75; white-space:pre-wrap; color:var(--ink); }
+  .suggested-answer-box .regenSuggestedBtn{ font-size:11.5px; padding:5px 10px; }
+  .own-answer-block{ border-top:1px dashed var(--line); padding-top:10px; margin-top:2px; }
+  .own-answer-block summary{ cursor:pointer; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-soft); list-style:none; }
+  .own-answer-block summary::-webkit-details-marker{ display:none; }
+  .own-answer-block summary:before{ content:'▸ '; }
+  .own-answer-block[open] summary:before{ content:'▾ '; }
+  .own-answer-block summary:hover{ color:var(--ink); }
+  .own-answer-block .own-answer-body{ margin-top:10px; }
+
+  /* tab5 board */
+  .board-form{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:24px; }
+  @media (max-width:960px){ .board-form{grid-template-columns:1fr 1fr;} }
+  .board-form label{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-soft); display:block; margin-bottom:4px; }
+  .board-form input, .board-form select{ width:100%; padding:9px 10px; }
+  .board-cols{ display:grid; grid-template-columns:repeat(6,1fr); gap:12px; overflow-x:auto; }
+  @media (max-width:960px){ .board-cols{grid-template-columns:1fr; overflow-x:visible;} }
+  .board-col{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px; min-height:120px; }
+  .board-col-title{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:8px; text-transform:uppercase; }
+  .app-card{ background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; font-size:12.5px; position:relative; }
+  .app-card .company{ font-weight:700; font-size:13.5px; }
+  .app-card .role{ color:var(--ink-soft); margin-bottom:4px; }
+  .app-card .meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-soft); }
+  .app-card select{ width:100%; margin-top:6px; font-size:11.5px; padding:5px 6px; }
+  .app-card .del{ position:absolute; top:6px; right:6px; }
+  .app-card .flag{ display:inline-block; margin-top:6px; font-size:10.5px; color:var(--seal); font-family:'JetBrains Mono', monospace; }
+
+  footer{ margin-top:40px; text-align:center; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-soft); line-height:1.8; }
+</style>
+<!-- v3.3.4：@page 無法用 body class 選取，改用 JS 在列印前動態寫入這個 style 標籤的內容，
+     讓「客製履歷」用直向 A4、「提案簡報」維持橫向，兩種模式各自套用正確的紙張方向。 -->
+<style id="dynPageSizeStyle"></style>
+</head>
+<body>
+<div id="authGate">
+  <div class="auth-box">
+    <h2>登入才能使用職透</h2>
+    <p>此工具所有功能都需要先登入 Google 帳號才能使用。你的履歷內容仍然只會在瀏覽器內處理，登入僅用於驗證身份。</p>
+    <button type="button" id="authLoginBtn">使用 Google 帳號登入</button>
+    <a class="auth-fallback-link" id="authFallbackLink" style="display:none;" href="#">如果按了沒反應，點這裡改用直接跳轉登入</a>
+    <div class="auth-note">點擊後會開啟登入視窗，請選擇「Google」繼續。</div>
+  </div>
+</div>
+
+<div id="appRoot">
+<div class="wrap">
+
+  <div class="draft-banner" id="draftBanner" style="display:none;">
+    <span id="draftBannerText">偵測到上次未完成的內容，要復原嗎？</span>
+    <div class="draft-banner-actions">
+      <button class="secondary" id="restoreDraftBtn" type="button">復原上次內容</button>
+      <button class="ghost" id="dismissDraftBtn" type="button">不用了</button>
+    </div>
+  </div>
+
+  <header>
+    <div>
+      <div class="eyebrow">求職前，先看懂這份職缺</div>
+      <h1>職透<span class="version-badge">V3.3.21</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="header-api-row">
+        <span class="user-status-pill" id="userStatusPill"></span>
+        <button class="header-api-link" id="apiSettingsBtn" type="button" onclick="openApiModal()">🔑 API Key 設定</button>
+        <span class="api-status-pill" id="apiStatusPill">尚未設定（使用系統內建連線）</span>
+      </div>
+      <p class="tagline">看穿一份履歷，也看穿一個職缺。上傳一次，完成媒合、健診、模擬面試、進度追蹤、客製履歷與提案簡報。</p>
+    </div>
+  </header>
+
+  <!-- global resume upload -->
+  <div class="panel">
+    <div class="upload-row">
+      <div>
+        <div class="field-label"><span>履歷 PDF（所有工具共用一次上傳）</span><span id="pdfStatus">尚未上傳</span></div>
+        <div class="dropzone" id="dropzone">
+          <span class="icon">📎</span>
+          <div class="dz-title">點擊選擇或拖曳 PDF 履歷到此處</div>
+          <div class="dz-sub">僅支援 .pdf，內容只在瀏覽器內處理，不會被儲存到伺服器</div>
+        </div>
+        <input type="file" id="fileInput" accept="application/pdf">
+        <div class="file-chip" id="fileChip" style="display:none;">
+          <span id="fileName"></span>
+          <button id="removeFile" type="button">移除</button>
+        </div>
+        <div class="pdf-preview-box" id="pdfPreviewBox" style="display:none;"></div>
+        <button class="pdf-preview-toggle" id="pdfPreviewToggleBtn" type="button" style="display:none;">顯示完整擷取文字</button>
+      </div>
+      <div>
+        <div class="field-label"><span>職務類型（影響語氣與重點）</span></div>
+        <select id="jobType">
+          <option value="技術研發">技術研發</option>
+          <option value="業務/客戶">業務/客戶</option>
+          <option value="行銷">行銷</option>
+          <option value="管理/主管">管理/主管</option>
+          <option value="新鮮人/實習">新鮮人/實習</option>
+          <option value="其他/通用">其他/通用</option>
+        </select>
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:10px;">
+          技術職強調解決問題與成果指標；業務職強調數字與客戶影響；管理職強調團隊與決策成果；新鮮人模式放寬完全對應的門檻，改強調學習力，但仍保守誠實。
+        </p>
+      </div>
+    </div>
+
+    <div class="shared-jd-block">
+      <div class="field-label"><span>職缺說明（媒合／健診／模擬面試 共用一次輸入）</span><span id="jdCountShared">0 字</span></div>
+      <textarea id="sharedJobDesc" placeholder="貼上職缺全文，包含職稱、職責與條件要求⋯下方所有工具都會直接使用這份說明，不需要在每個頁籤重複貼上"></textarea>
+      <div class="cta-row">
+        <button class="primary" id="runAllBtn" disabled>一鍵產生全部分析（媒合／健診／模擬面試）</button>
+        <span class="status-line" id="runAllStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="t1"><span class="step-num">01<span class="tab-dot" id="dot1"></span></span><span class="step-label">履歷媒合</span></button>
+    <button class="tab-btn" data-tab="t2"><span class="step-num">02<span class="tab-dot" id="dot2"></span></span><span class="step-label">履歷健診</span></button>
+    <button class="tab-btn" data-tab="t4"><span class="step-num">03<span class="tab-dot" id="dot4"></span></span><span class="step-label">模擬面試</span></button>
+    <button class="tab-btn" data-tab="t5"><span class="step-num">04</span><span class="step-label">求職看板</span></button>
+    <button class="tab-btn" data-tab="t6"><span class="step-num">05<span class="tab-dot" id="dot6"></span></span><span class="step-label">客製履歷</span></button>
+    <button class="tab-btn" data-tab="t7"><span class="step-num">06<span class="tab-dot" id="dot7"></span></span><span class="step-label">提案簡報</span></button>
+  </nav>
+
+  <!-- TAB 1: 履歷媒合 -->
+  <div class="tab-panel active" id="t1">
+    <div class="panel tool-panel">
+      <p class="tool-note">會使用上方填寫的履歷與職缺說明，產生媒合分數、匹配重點與自我推薦信。</p>
+      <div class="cta-row">
+        <button class="primary" id="generateBtn1" disabled>產生媒合分析與推薦信</button>
+        <span class="status-line" id="statusLine1"></span>
+      </div>
+    </div>
+    <div class="stale-banner" id="staleBanner1">⚠️ 上方職缺說明已變更，以下結果可能已經過期，建議重新產生。</div>
+    <div class="results-panel empty" id="resultsPanel1">
+      <div class="placeholder"><span class="icon">🗂️</span>在上方填寫履歷與職缺說明後，點擊上面的按鈕，這裡會顯示媒合分數、匹配重點與草擬好的自我推薦信。</div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 履歷健診 -->
+  <div class="tab-panel" id="t2">
+    <div class="panel tool-panel">
+      <p class="tool-note">會使用上方填寫的履歷與職缺說明，做一次 ATS 相容度健診。</p>
+      <div class="cta-row">
+        <button class="primary" id="generateBtn2" disabled>健診履歷</button>
+        <span class="status-line" id="statusLine2"></span>
+      </div>
+    </div>
+    <div class="stale-banner" id="staleBanner2">⚠️ 上方職缺說明已變更，以下結果可能已經過期，建議重新產生。</div>
+    <div class="results-panel empty" id="resultsPanel2">
+      <div class="placeholder"><span class="icon">🩺</span>健診會給你一個相容度分數，並列出缺口與具體修改建議，讓你決定要不要先修履歷再投遞。</div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 模擬面試 -->
+  <div class="tab-panel" id="t4">
+    <div class="panel tool-panel">
+      <p class="tool-note">會使用上方填寫的履歷與職缺說明，針對履歷中證據較弱的地方出面試題，並直接由 AI 示範一個「建議回答」；你也可以自己打字練習作答，讓 AI 給回饋。</p>
+      <div class="cta-row">
+        <button class="primary" id="generateBtn4" disabled>產生面試題目</button>
+        <span class="status-line" id="statusLine4"></span>
+      </div>
+    </div>
+    <div class="stale-banner" id="staleBanner4">⚠️ 上方職缺說明已變更，以下題目可能已經過期，建議重新產生。</div>
+    <div class="results-panel empty" id="resultsPanel4">
+      <div class="placeholder"><span class="icon">🎤</span>題目會優先鎖定履歷中「保守帶過」的地方，讓你先練習怎麼把經驗說具體。</div>
+    </div>
+
+    <div class="reverse-block">
+      <h2 class="section-title">反問面試官 &amp; 隱性風險評估</h2>
+      <p class="tool-note">產生 10 個你可以反問面試官的關鍵問題，並根據職缺說明（與你選填的公開統計資訊）初步評估潛在隱性風險與勝任程度。</p>
+      <div class="field-label"><span>104 / 1111 公開統計資訊（選填）</span></div>
+      <textarea id="marketStatsInput" placeholder="可貼上你在職缺頁面看到的公開資訊，例如：薪資範圍、應徵人數、公司規模、產業別、更新頻率等⋯（此工具無法自動抓取 104/1111 網站資料，需要手動貼上）"></textarea>
+      <div class="cta-row">
+        <button class="primary" id="generateReverseBtn" disabled>產生反問清單與風險評估</button>
+        <span class="status-line" id="reverseStatusLine"></span>
+      </div>
+      <div class="stale-banner" id="staleBannerReverse">⚠️ 上方職缺說明已變更，以下內容可能已經過期，建議重新產生。</div>
+      <div class="results-panel empty" id="reverseResultsPanel">
+        <div class="placeholder"><span class="icon">🔍</span>產生後會列出 10 個反問面試官的問題（附上你為什麼要問這題）、潛在隱性風險，以及初步的勝任度判斷。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: 求職看板 -->
+  <div class="tab-panel" id="t5">
+    <div class="panel">
+      <div class="field-label"><span>新增一筆投遞記錄</span></div>
+      <div class="board-form">
+        <div><label>公司名稱</label><input type="text" id="fCompany" placeholder="公司名稱"></div>
+        <div><label>職稱</label><input type="text" id="fRole" placeholder="應徵職稱"></div>
+        <div><label>投遞日期</label><input type="date" id="fDate"></div>
+        <div><label>狀態</label>
+          <select id="fStatus">
+            <option value="待投遞">待投遞</option>
+            <option value="已投遞">已投遞</option>
+            <option value="已回覆">已回覆</option>
+            <option value="面試中">面試中</option>
+            <option value="已offer">已offer</option>
+            <option value="已婉拒">已婉拒</option>
+          </select>
+        </div>
+        <div><button class="primary" id="addEntryBtn" type="button">加入看板</button></div>
+      </div>
+      <div class="field-label"><span>職缺說明（選填，填寫後才能用於下方的卡關原因分析）</span></div>
+      <textarea id="fJobDesc" placeholder="選填。若從「履歷媒合」按加入看板會自動帶入；也可以自己貼上，之後才能一起分析卡關原因。" style="min-height:70px;"></textarea>
+      <div class="status-line" id="statusLine5"></div>
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+      <div class="field-label"><span>拒絕原因回推分析</span></div>
+      <p class="tool-note">分析「已婉拒」或「已投遞超過 10 天沒回應」、且有填寫職缺說明的紀錄，找出履歷與這些職缺之間可能重複出現的落差。這是根據書面資料做的推測，不是公司提供的真實理由。</p>
+      <div class="cta-row">
+        <button class="primary" id="analyzeRejectionBtn" disabled>分析卡關原因</button>
+        <span class="status-line" id="rejectionStatusLine"></span>
+      </div>
+    </div>
+    <div class="results-panel empty" id="rejectionResultsPanel">
+      <div class="placeholder"><span class="icon">🔍</span>累積至少 2 筆已婉拒／已投遞超過 10 天，且有填寫職缺說明的紀錄後，這裡會顯示可能的卡關模式與改善建議。</div>
+    </div>
+
+    <div class="results-panel" style="margin-top:22px;border:none;background:none;padding:0;">
+      <div class="board-cols" id="boardCols"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: 客製履歷（原「健診新履歷」，改名更貼切：這是「針對此職缺重新編排的新履歷」，不是健診報告） -->
+  <div class="tab-panel" id="t6">
+    <div class="panel tool-panel">
+      <p class="tool-note">會使用上方填寫的履歷與職缺說明，由 AI 扮演十年資歷的跨國企業人資主管與履歷撰寫專家，依 STAR 原則與量化數據導向，重新編排一份針對此職缺客製化的世界級標準新履歷（精煉重點、強勢動詞、對齊職缺關鍵字），完成後可下載 PDF 提供給該求職公司。AI 只會調整表達方式與重點順序，不會捏造原始履歷中沒有的經歷或數字；若某項成就原始履歷缺少具體數字，AI 會標示「請補充數據」的提示，由你自行填入真實成果。</p>
+      <p class="standalone-note">⚠️ 需單獨生成：因產生完整新履歷需花費較多 tokens，不包含在上方「一鍵產生全部分析」中，請在此頁籤單獨點擊產生。</p>
+
+      <label class="field-label" style="margin-top:16px;">STEP 1・挑選履歷版型（世界級企業常見排版風格，產生後仍可隨時切換，不需重新產生）</label>
+      <div class="deck-template-grid" id="resumeTemplatePicker"></div>
+
+      <div class="cta-row" style="margin-top:16px;">
+        <button class="primary" id="generateBtn6" disabled>STEP 2・產生客製新履歷</button>
+        <span class="status-line" id="statusLine6"></span>
+      </div>
+    </div>
+    <div class="stale-banner" id="staleBanner6">⚠️ 上方職缺說明已變更，以下內容可能已經過期，建議重新產生。</div>
+    <div class="results-panel empty" id="resultsPanel6">
+      <div class="placeholder"><span class="icon">📄</span>選好版型並產生後，這裡會顯示一份針對此職缺重新編排的新履歷預覽，並提供「更換版型」與「下載 PDF」按鈕。</div>
+    </div>
+  </div>
+
+  <!-- TAB 7: 提案簡報 -->
+  <div class="tab-panel" id="t7">
+    <div class="panel tool-panel">
+      <p class="tool-note">會使用上方填寫的履歷與職缺說明，依照「面試提案簡報」黃金架構——破題與個人亮點、現況痛點洞察、你的提案與 30-60-90 天計畫、能力佐證、結語 Q&A——自動產生一份 8~10 頁的簡報，可用於面試或主動投遞時附上。每頁文字力求精簡（少即是多，重點留給你口頭表達），完成後可下載 PDF。</p>
+      <p class="standalone-note">⚠️ 需單獨生成：因產生完整簡報需花費較多 tokens，不包含在上方「一鍵產生全部分析」中，請在此頁籤單獨點擊產生。</p>
+
+      <label class="field-label" style="margin-top:16px;">STEP 1・挑選簡報版型（世界級企業簡報常見風格，產生後仍可隨時切換，不需重新產生）</label>
+      <div class="deck-template-grid" id="deckTemplatePicker"></div>
+
+      <label class="field-label" for="dt7ExtraContext" style="margin-top:16px;">STEP 2・補充背景資訊（選填，會讓內容更精準）</label>
+      <textarea id="dt7ExtraContext" class="dt7-extra-textarea" rows="3" placeholder="如果你已經知道這間公司／這個職位目前面臨的挑戰、正在推動的計畫或轉型方向，或是你特別想強調的重點，寫在這裡；AI 會據此規劃「現況痛點」與「提案對策」的內容，讓簡報更貼近實際面試情境。不填也沒關係，AI 會依職缺說明自行推估。"></textarea>
+
+      <div class="cta-row">
+        <button class="primary" id="generateBtn7" disabled>STEP 3・產生提案簡報</button>
+        <span class="status-line" id="statusLine7"></span>
+      </div>
+    </div>
+    <div class="stale-banner" id="staleBanner7">⚠️ 上方職缺說明已變更，以下內容可能已經過期，建議重新產生。</div>
+    <div class="results-panel empty" id="resultsPanel7">
+      <div class="placeholder"><span class="icon">📊</span>產生後，這裡會顯示 8~10 頁的提案簡報預覽，並提供「更換版型」與「下載 PDF」按鈕。</div>
+    </div>
+  </div>
+
+  <footer>
+    本工具會在你的瀏覽器內處理履歷內容以完成分析；為提供帳號紀錄與客服功能，你上傳的履歷 PDF 原始檔也會另外安全保存一份，僅網站管理者可查看。求職看板的紀錄會保存在你自己的帳號空間，其他人看不到。
+    <div class="debug-toggle-row footer-debug-toggle">
+      <span class="footer-dev-info">開發者:游士賢　建議信箱:<a href="https://mail.google.com/mail/?view=cm&fs=1&to=felix670131@gmail.com&su=%E8%81%B7%E9%80%8F%E5%BB%BA%E8%AD%B0" target="_blank" rel="noopener noreferrer" style="color:inherit;">felix670131@gmail.com</a></span>
+      <button class="ghost" id="debugToggleBtn" type="button">除錯模式</button>
+    </div>
+    <div class="debug-panel" id="debugPanel" style="display:none;">
+      <div class="debug-panel-header">
+        <span>除錯紀錄（最新在最上面，只記錄在你自己瀏覽器內，不會上傳）</span>
+        <div class="debug-actions">
+          <button class="ghost" id="debugCopyBtn" type="button">複製全部</button>
+          <button class="ghost" id="debugClearBtn" type="button">清空</button>
+        </div>
+      </div>
+      <div class="debug-note">如果分析功能又出現失敗的狀況，打開這裡把內容複製給開發人員，會包含實際的 HTTP 狀態碼與錯誤訊息，比畫面上的簡短提示更有用。</div>
+      <pre id="debugLogContent">（目前沒有紀錄）</pre>
+    </div>
+  </footer>
+</div>
+
+<!-- ---------- API Key 設定 Modal（Gemini / ChatGPT / Claude / Agnes AI） ---------- -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>AI API Key 設定</h3>
+      <button class="modal-close" type="button" onclick="closeApiModal()">✕</button>
+    </div>
+    <p class="desc">若想使用你自己的 AI 帳號額度來執行媒合分析、履歷健診、模擬面試與拒絕原因分析，可在下方選擇一個供應商並貼上 API Key。金鑰僅會暫存在本次瀏覽器分頁記憶體（sessionStorage），關閉分頁即清除，不會上傳到任何伺服器。若不設定，工具會繼續使用系統內建連線（僅在支援的環境中可用）。</p>
+
+    <div class="provider-tabs" id="provider-tabs">
+      <button class="provider-tab-btn active" data-provider="claude" type="button" onclick="switchProviderTab('claude')">Claude (Anthropic)</button>
+      <button class="provider-tab-btn" data-provider="gemini" type="button" onclick="switchProviderTab('gemini')">Gemini (Google AI Studio)</button>
+      <button class="provider-tab-btn" data-provider="chatgpt" type="button" onclick="switchProviderTab('chatgpt')">ChatGPT (OpenAI)</button>
+      <button class="provider-tab-btn" data-provider="agnes" type="button" onclick="switchProviderTab('agnes')">Agnes AI</button>
+    </div>
+
+    <div id="provider-pane-claude" class="provider-pane">
+      <div class="form-group">
+        <label class="form-label">Anthropic API Key</label>
+        <input id="api-key-input-claude" type="password" class="form-ctrl" placeholder="sk-ant-...">
+        <p class="form-hint">可在 console.anthropic.com 取得金鑰。使用模型 claude-sonnet-5。</p>
+      </div>
+    </div>
+    <div id="provider-pane-gemini" class="provider-pane" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Google AI Studio API Key</label>
+        <input id="api-key-input-gemini" type="password" class="form-ctrl" placeholder="AIzaSy... 或 AQ.Ab8...">
+        <p class="form-hint">可在 aistudio.google.com/apikey 取得金鑰，支援 AIzaSy 開頭（標準格式）與 AQ. 開頭（新格式）兩種金鑰。提醒：Gemini API 在純前端（瀏覽器直連）環境下偶有 CORS 跨域限制，若連線失敗，工具會顯示原因並建議改用其他供應商。</p>
+      </div>
+    </div>
+    <div id="provider-pane-chatgpt" class="provider-pane" style="display:none">
+      <div class="form-group">
+        <label class="form-label">OpenAI API Key</label>
+        <input id="api-key-input-chatgpt" type="password" class="form-ctrl" placeholder="sk-...">
+        <p class="form-hint">可在 platform.openai.com/api-keys 取得金鑰。使用模型 gpt-4o。提醒：OpenAI API 在純前端環境下同樣可能遇到 CORS 限制，若連線失敗，請改用其他供應商。</p>
+      </div>
+    </div>
+    <div id="provider-pane-agnes" class="provider-pane" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Agnes AI API Key</label>
+        <input id="api-key-input-agnes" type="password" class="form-ctrl" placeholder="貼上你的 Agnes AI API Key">
+        <p class="form-hint">Agnes AI 提供 OpenAI 相容的介面，可作為替代選項。若有 Base URL 需求，可在下方欄位設定。</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Agnes AI Base URL（選填，預設使用官方端點）</label>
+        <input id="api-baseurl-agnes" type="text" class="form-ctrl" placeholder="https://apihub.agnes-ai.com/v1">
+        <p class="form-hint">留空則使用官方預設端點 https://apihub.agnes-ai.com/v1（model: agnes-2.0-flash）。</p>
+      </div>
+    </div>
+
+    <div class="modal-current-mode" id="modal-current-mode"></div>
+    <div class="modal-foot">
+      <button class="secondary" type="button" onclick="clearApiKey()">清除並改用系統內建</button>
+      <button class="primary" type="button" onclick="saveApiKey()">儲存並啟用</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- 後台管理 Modal（僅 felix670131@gmail.com 可見） ---------- -->
+<div class="modal-overlay" id="adminModal" style="display:none;">
+  <div class="modal-box admin-modal-box">
+    <div class="modal-head">
+      <h3>後台管理</h3>
+      <button class="modal-close" type="button" onclick="closeAdminPanel()">✕</button>
+    </div>
+    <p class="desc">登入紀錄與使用者上傳的履歷 PDF，僅網站管理者可見。刪除履歷可釋放 Netlify Blobs 儲存空間。</p>
+    <div id="adminModalBody"><p>載入中…</p></div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ---------- v3.3.21：Netlify Identity（Google 登入）門檻 + 後台管理 ---------- */
+const ADMIN_EMAIL = 'felix670131@gmail.com';
+window.__zhitouCurrentUser = null;
+
+async function getIdentityToken(){
+  try {
+    const user = window.netlifyIdentity && netlifyIdentity.currentUser();
+    if (!user) return null;
+    const t = await user.jwt();
+    return t;
+  } catch (e) { console.error('取得登入憑證失敗', e); return null; }
+}
+
+async function recordLoginEvent(){
+  const token = await getIdentityToken();
+  if (!token) return;
+  try {
+    await fetch('/.netlify/functions/record-login', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+  } catch (e) { console.error('記錄登入失敗（不影響使用）', e); }
+}
+
+async function uploadResumeToServer(file){
+  const token = await getIdentityToken();
+  if (!token) return;
+  try {
+    const buf = await file.arrayBuffer();
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk){
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    const base64 = btoa(binary);
+    await fetch('/.netlify/functions/upload-resume', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, base64 })
+    });
+  } catch (e) { console.error('履歷存檔失敗（不影響本次分析使用）', e); }
+}
+
+(function(){
+  const gate = document.getElementById('authGate');
+  const app = document.getElementById('appRoot');
+  const pill = document.getElementById('userStatusPill');
+  const loginBtn = document.getElementById('authLoginBtn');
+
+  function showApp(user){
+    gate.style.display = 'none';
+    app.style.display = 'block';
+    window.__zhitouCurrentUser = user || null;
+    const email = (user && user.email) ? user.email : '';
+    const isAdmin = email.toLowerCase() === ADMIN_EMAIL;
+    pill.innerHTML = email
+      ? `👤 ${email} ${isAdmin ? '<button type="button" id="adminOpenBtn">後台管理</button>' : ''}<button type="button" id="logoutBtn">登出</button>`
+      : '';
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.onclick = () => window.netlifyIdentity.logout();
+    const adminBtn = document.getElementById('adminOpenBtn');
+    if (adminBtn) adminBtn.onclick = () => openAdminPanel();
+  }
+  function showGate(){
+    gate.style.display = 'flex';
+    app.style.display = 'none';
+    pill.innerHTML = '';
+    window.__zhitouCurrentUser = null;
+  }
+
+  if (window.netlifyIdentity){
+    netlifyIdentity.on('init', user => { if (user){ showApp(user); recordLoginEvent(); } else { showGate(); } });
+    netlifyIdentity.on('login', user => { showApp(user); netlifyIdentity.close(); recordLoginEvent(); });
+    netlifyIdentity.on('logout', () => showGate());
+    netlifyIdentity.init();
+  } else {
+    // Netlify Identity 腳本未載入（例如非部署在 Netlify 上），顯示提示但不硬擋畫面
+    gate.querySelector('p').textContent = '無法連線至 Google 登入服務，請確認此網站已部署在 Netlify 並啟用 Identity 服務。';
+  }
+  loginBtn.addEventListener('click', () => {
+    if (window.netlifyIdentity) netlifyIdentity.open('login');
+    // 若 widget 因已知的 z-index 疊層問題而「隱形開啟」，備援連結會在按下後出現，
+    // 讓使用者可以改用直接跳轉的方式登入。
+    const fallback = document.getElementById('authFallbackLink');
+    fallback.href = window.location.origin + '/.netlify/identity/authorize?provider=google';
+    fallback.style.display = 'block';
+  });
+})();
+
+/* ---------- 後台管理（僅 ADMIN_EMAIL 可見） ---------- */
+async function openAdminPanel(){
+  const modal = document.getElementById('adminModal');
+  modal.style.display = 'flex';
+  const body = document.getElementById('adminModalBody');
+  body.innerHTML = '<p>載入中…</p>';
+  const token = await getIdentityToken();
+  if (!token){ body.innerHTML = '<p>無法取得登入憑證，請重新登入後再試。</p>'; return; }
+  try {
+    const res = await fetch('/.netlify/functions/admin-data', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok){
+      const e = await res.json().catch(() => ({}));
+      body.innerHTML = `<p>讀取失敗：${e.error || res.status}</p>`;
+      return;
+    }
+    const data = await res.json();
+    renderAdminPanel(data);
+  } catch (e){
+    console.error(e);
+    body.innerHTML = '<p>讀取後台資料時發生錯誤。</p>';
+  }
+}
+
+function closeAdminPanel(){
+  document.getElementById('adminModal').style.display = 'none';
+}
+
+function renderAdminPanel(data){
+  const body = document.getElementById('adminModalBody');
+  const logins = data.logins || [];
+  const resumes = data.resumes || [];
+
+  const resumesByEmail = {};
+  resumes.forEach(r => {
+    (resumesByEmail[r.email] = resumesByEmail[r.email] || []).push(r);
+  });
+
+  let html = `<div class="admin-section-title">登入紀錄（共 ${logins.length} 筆，最新在最上）</div>`;
+  html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
+    '<th>中文姓名</th><th>Email</th><th>IP</th><th>時間</th><th>瀏覽器</th><th>履歷 PDF</th>' +
+    '</tr></thead><tbody>';
+
+  if (logins.length === 0){
+    html += '<tr><td colspan="6">目前沒有登入紀錄</td></tr>';
+  } else {
+    logins.forEach(l => {
+      const files = resumesByEmail[l.email] || [];
+      const fileCell = files.length
+        ? files.map(f => adminResumeCellHtml(f)).join('')
+        : '（尚無上傳）';
+      html += `<tr>
+        <td>${escapeAdminHtml(l.name || '（未提供）')}</td>
+        <td>${escapeAdminHtml(l.email || '')}</td>
+        <td>${escapeAdminHtml(l.ip || '')}</td>
+        <td>${escapeAdminHtml(formatAdminTime(l.time))}</td>
+        <td class="admin-ua">${escapeAdminHtml(l.browser || '')}</td>
+        <td>${fileCell}</td>
+      </tr>`;
+    });
+  }
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+
+  body.querySelectorAll('[data-download-key]').forEach(btn => {
+    btn.addEventListener('click', () => downloadAdminResume(btn.dataset.downloadKey));
+  });
+  body.querySelectorAll('[data-delete-key]').forEach(btn => {
+    btn.addEventListener('click', () => deleteAdminResume(btn.dataset.deleteKey));
+  });
+}
+
+function adminResumeCellHtml(f){
+  const sizeKb = f.size ? Math.round(f.size / 1024) + ' KB' : '';
+  return `<div class="admin-file-row">
+    <span title="${escapeAdminHtml(f.filename)}">${escapeAdminHtml(f.filename)}</span>
+    <span class="admin-file-meta">${sizeKb}</span>
+    <button type="button" class="ghost" data-download-key="${escapeAdminHtml(f.key)}">下載</button>
+    <button type="button" class="ghost" data-delete-key="${escapeAdminHtml(f.key)}">刪除</button>
+  </div>`;
+}
+
+function escapeAdminHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatAdminTime(iso){
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleString('zh-TW'); } catch(e){ return iso; }
+}
+
+async function downloadAdminResume(key){
+  const token = await getIdentityToken();
+  if (!token) return;
+  try {
+    const res = await fetch('/.netlify/functions/admin-resume-file?key=' + encodeURIComponent(key), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok){ alert('下載失敗'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = key.split('-').slice(2).join('-') || 'resume.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e){ console.error(e); alert('下載時發生錯誤'); }
+}
+
+async function deleteAdminResume(key){
+  if (!confirm('確定要刪除這份履歷檔案嗎？此動作無法復原，會釋放 Netlify Blobs 空間。')) return;
+  const token = await getIdentityToken();
+  if (!token) return;
+  try {
+    const res = await fetch('/.netlify/functions/admin-resume-file', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', key })
+    });
+    if (!res.ok){ alert('刪除失敗'); return; }
+    openAdminPanel(); // 重新整理列表
+  } catch (e){ console.error(e); alert('刪除時發生錯誤'); }
+}
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ---------- shared state & helpers ---------- */
+let resumeText = '';
+let resumeFileLabel = '';
+
+function escapeHtml(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =========================================================
+   v3.3.6 新增：Word（.doc）檔案下載。
+   做法說明：跟 PDF 下載一樣不引入額外的檔案產生函式庫（docx 產生
+   函式庫通常體積不小，且中文相容性需另外測試），改用瀏覽器與 Word
+   都認識的「Word HTML」格式：一段帶有 Microsoft Office XML
+   命名空間宣告的 HTML，存成副檔名 .doc、MIME 類型 application/msword。
+   Word（Windows／Mac）與多數線上工具開啟後即為一份「真正可編輯」的
+   文件（字型、段落、清單、表格都可用 Word 工具列調整），求職者可以
+   自行微調文字、格式，不受限於本工具產生的排版。
+========================================================= */
+function buildWordDocument(titleText, bodyHtml){
+  return `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(titleText)}</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page Section1 { size: 21cm 29.7cm; margin: 2cm 2cm 2cm 2cm; mso-header-margin:1cm; mso-footer-margin:1cm; }
+  div.Section1 { page: Section1; }
+  body{ font-family:'Microsoft JhengHei','PMingLiU','Noto Sans TC',Arial,sans-serif; font-size:11pt; color:#10151F; line-height:1.6; }
+  h1{ font-size:20pt; margin:0 0 4pt; color:#10151F; }
+  h2{ font-size:13pt; margin:16pt 0 6pt; padding-bottom:3pt; border-bottom:1pt solid #5B4FE0; color:#10151F; }
+  h3{ font-size:11.5pt; margin:10pt 0 2pt; color:#10151F; }
+  p{ margin:0 0 6pt; }
+  ul{ margin:2pt 0 8pt; padding-left:20pt; }
+  li{ margin:0 0 3pt; }
+  table{ border-collapse:collapse; width:100%; margin:0 0 2pt; }
+  td{ vertical-align:top; padding:0; }
+  .doc-muted{ color:#69707E; font-size:9.5pt; }
+  .doc-meta{ color:#69707E; font-size:10pt; margin:0 0 12pt; }
+  .doc-tag{ display:inline-block; border:0.75pt solid #69707E; padding:1pt 6pt; margin:0 6pt 4pt 0; font-size:9.5pt; }
+  .doc-footer{ margin-top:16pt; padding-top:6pt; border-top:0.75pt solid #E2E5EA; font-size:9pt; color:#69707E; }
+  .doc-pagebreak{ page-break-before:always; mso-page-break-before:always; }
+  hr{ border:none; border-top:0.75pt solid #E2E5EA; margin:10pt 0; }
+</style>
+</head>
+<body>
+<div class="Section1">
+${bodyHtml}
+</div>
+</body>
+</html>`;
+}
+
+function downloadWordDocument(filename, titleText, bodyHtml){
+  const fullHtml = buildWordDocument(titleText, bodyHtml);
+  const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.endsWith('.doc') ? filename : filename + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+/* =========================================================
+   除錯記錄：把每次 API 呼叫的結果（成功/失敗、狀態碼、回應片段）
+   記錄下來，方便未來排查問題時提供給開發人員。
+========================================================= */
+let debugLog = [];
+let debugModeOn = false;
+
+function addDebugLog(entry){
+  debugLog.unshift({ time: new Date().toLocaleTimeString('zh-TW'), ...entry });
+  if (debugLog.length > 50) debugLog.pop();
+  if (debugModeOn) renderDebugLog();
+}
+
+function renderDebugLog(){
+  const el = document.getElementById('debugLogContent');
+  if (!el) return;
+  el.textContent = debugLog.length ? debugLog.map(e => JSON.stringify(e, null, 2)).join('\n---\n') : '（目前沒有紀錄）';
+}
+
+document.getElementById('debugToggleBtn').addEventListener('click', () => {
+  debugModeOn = !debugModeOn;
+  document.getElementById('debugPanel').style.display = debugModeOn ? 'block' : 'none';
+  document.getElementById('debugToggleBtn').textContent = debugModeOn ? '關閉除錯模式' : '除錯模式';
+  if (debugModeOn) renderDebugLog();
+});
+document.getElementById('debugCopyBtn').addEventListener('click', async () => {
+  const text = debugLog.length ? debugLog.map(e => JSON.stringify(e)).join('\n') : '（目前沒有紀錄）';
+  await navigator.clipboard.writeText(text);
+  const b = document.getElementById('debugCopyBtn'); const orig = b.textContent;
+  b.textContent = '已複製'; setTimeout(() => b.textContent = orig, 1500);
+});
+document.getElementById('debugClearBtn').addEventListener('click', () => {
+  debugLog = [];
+  renderDebugLog();
+});
+
+/* =========================================================
+   多供應商 API Key 管理（Claude / Gemini / ChatGPT / Agnes AI）
+   金鑰只暫存在本次瀏覽器分頁的 sessionStorage，不會上傳到任何伺服器。
+   若使用者沒有設定任何金鑰，維持原本行為：呼叫系統內建連線
+   （不帶金鑰，僅在支援此免金鑰連線的環境，例如 Claude 網頁/App 的
+   Artifact 預覽環境中才會成功；在一般瀏覽器直接開啟此檔案時，
+   請務必先在「AI API Key 設定」貼上你自己的金鑰）。
+========================================================= */
+const RM_KEY_PREFIX = 'resumeMatcher_';
+function getProvider(){ try{ return sessionStorage.getItem(RM_KEY_PREFIX+'provider')||''; }catch(e){ return ''; } }
+function setProvider(p){ try{ sessionStorage.setItem(RM_KEY_PREFIX+'provider', p); }catch(e){} }
+function getKeyFor(provider){ try{ return sessionStorage.getItem(RM_KEY_PREFIX+'key_'+provider)||''; }catch(e){ return ''; } }
+function setKeyFor(provider,k){ try{ sessionStorage.setItem(RM_KEY_PREFIX+'key_'+provider, k); }catch(e){} }
+function removeKeyFor(provider){ try{ sessionStorage.removeItem(RM_KEY_PREFIX+'key_'+provider); }catch(e){} }
+function isAiKeyMode(){ const p=getProvider(); return !!(p && getKeyFor(p)); }
+
+const PROVIDER_LABEL = { claude:'Claude (Anthropic)', gemini:'Gemini (Google AI Studio)', chatgpt:'ChatGPT (OpenAI)', agnes:'Agnes AI' };
+let currentProviderTab = 'claude';
+
+function switchProviderTab(p){
+  currentProviderTab = p;
+  document.querySelectorAll('.provider-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.provider === p));
+  ['claude','gemini','chatgpt','agnes'].forEach(name => {
+    const pane = document.getElementById('provider-pane-' + name);
+    if (pane) pane.style.display = (name === p) ? 'block' : 'none';
+  });
+}
+
+function refreshApiUi(){
+  const pill = document.getElementById('apiStatusPill');
+  const modalMode = document.getElementById('modal-current-mode');
+  const provider = getProvider();
+  if (isAiKeyMode()){
+    if (pill){ pill.classList.add('on'); pill.textContent = '已啟用：' + PROVIDER_LABEL[provider]; }
+    if (modalMode) modalMode.innerHTML = '目前狀態：<b>' + PROVIDER_LABEL[provider] + ' 已啟用</b>（使用你自己貼上的 API Key）';
+  } else {
+    if (pill){ pill.classList.remove('on'); pill.textContent = '尚未設定 API Key（使用系統內建連線）'; }
+    if (modalMode) modalMode.textContent = '目前狀態：系統內建連線（未設定任何 API Key）';
+  }
+}
+
+function openApiModal(){
+  const p = getProvider() || 'claude';
+  switchProviderTab(p);
+  document.getElementById('api-key-input-claude').value  = getKeyFor('claude');
+  document.getElementById('api-key-input-gemini').value  = getKeyFor('gemini');
+  document.getElementById('api-key-input-chatgpt').value = getKeyFor('chatgpt');
+  document.getElementById('api-key-input-agnes').value   = getKeyFor('agnes');
+  try{ document.getElementById('api-baseurl-agnes').value = sessionStorage.getItem(RM_KEY_PREFIX+'baseurl_agnes')||''; }catch(e){}
+  refreshApiUi();
+  document.getElementById('api-modal').classList.add('open');
+}
+function closeApiModal(){ document.getElementById('api-modal').classList.remove('open'); }
+
+function isValidGeminiKeyFormat(v){ return v.startsWith('AIza') || v.startsWith('AQ.'); }
+
+function saveApiKey(){
+  const p = currentProviderTab;
+  const v = document.getElementById('api-key-input-' + p).value.trim();
+  if (!v){ alert('請先貼上 API Key，或按「清除並改用系統內建」。'); return; }
+  if (p === 'claude'  && !v.startsWith('sk-ant-')) { alert('這不像是有效的 Anthropic API Key 格式（應以 sk-ant- 開頭），請確認後再試'); return; }
+  if (p === 'gemini'  && !isValidGeminiKeyFormat(v)) { alert('這不像是有效的 Google AI Studio API Key 格式（應以 AIza 或 AQ. 開頭），請確認後再試'); return; }
+  if (p === 'chatgpt' && !v.startsWith('sk-')) { alert('這不像是有效的 OpenAI API Key 格式（應以 sk- 開頭），請確認後再試'); return; }
+  // Agnes AI：不限制格式，接受任何非空金鑰
+  setKeyFor(p, v);
+  setProvider(p);
+  if (p === 'agnes'){
+    const baseUrl = document.getElementById('api-baseurl-agnes').value.trim();
+    try{ sessionStorage.setItem(RM_KEY_PREFIX+'baseurl_agnes', baseUrl); }catch(e){}
+  }
+  refreshApiUi();
+  closeApiModal();
+}
+
+function clearApiKey(){
+  ['claude','gemini','chatgpt','agnes'].forEach(removeKeyFor);
+  try{
+    sessionStorage.removeItem(RM_KEY_PREFIX+'provider');
+    sessionStorage.removeItem(RM_KEY_PREFIX+'baseurl_agnes');
+  }catch(e){}
+  ['claude','gemini','chatgpt','agnes'].forEach(p => {
+    const el = document.getElementById('api-key-input-' + p);
+    if (el) el.value = '';
+  });
+  const baseUrlEl = document.getElementById('api-baseurl-agnes');
+  if (baseUrlEl) baseUrlEl.value = '';
+  refreshApiUi();
+  closeApiModal();
+}
+
+/* ---------------- 通用重試包裝器：處理 429/502/503/504 等暫時性錯誤 ---------------- */
+const RM_RETRYABLE_STATUSES = [429, 502, 503, 504];
+async function fetchWithRetry(fetchFn, maxRetries){
+  let lastResp = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++){
+    let resp;
+    try { resp = await fetchFn(); }
+    catch (err){
+      if (attempt < maxRetries){ await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1200)); continue; }
+      throw err;
+    }
+    if (resp.ok) return resp;
+    if (RM_RETRYABLE_STATUSES.includes(resp.status) && attempt < maxRetries){
+      lastResp = resp;
+      await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1200));
+      continue;
+    }
+    return resp;
+  }
+  return lastResp;
+}
+
+/* =========================================================
+   v2.9.199 修正：各家供應商的 max_tokens／maxOutputTokens 參數都有
+   API 本身的硬性上限（例如 OpenAI 相容端點常見上限落在 16000 左右，
+   部分模型甚至更低），若直接把使用者要求的數字（可能高達 45000）原封
+   不動送出去，API 極可能直接回傳 400 錯誤（invalid_request_error：
+   max_tokens 超過該模型上限），而不是我們原本想解決的「輸出被截
+   斷」。因此在真正送出前，統一夾住（clamp）在各供應商已知安全上限
+   之內，同時仍盡量給到最大可用值，兩者兼顧。
+========================================================= */
+const RM_MAX_TOKENS_CAP = { claude: 16000, gemini: 16000, chatgpt: 16000, agnes: 16000, builtin: 8000 };
+function clampMaxTokens(provider, requested){
+  const cap = RM_MAX_TOKENS_CAP[provider] || 8000;
+  const value = requested || 1200;
+  return Math.min(value, cap);
+}
+
+/* v3.0.99：部分供應商（尤其是舊版/相容端點）不一定會在回應中附上正確的
+   usage／用量資訊，這裡提供一個粗略的備援估算（依中英文混合文字概算，
+   非精確計算），只在 API 沒有回傳實際用量時才使用，並在畫面上以「約」
+   標示，避免誤導使用者以為是精確數字。*/
+function estimateTokensFallback(promptText, responseText){
+  const totalChars = String(promptText || '').length + String(responseText || '').length;
+  return Math.max(1, Math.ceil(totalChars / 2));
+}
+
+/* ---------------- 系統內建連線（未設定金鑰時的預設行為，維持原本相容性） ---------------- */
+async function fetchClaudeBuiltInText(systemPrompt, userContent, maxTokens){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: clampMaxTokens('builtin', maxTokens),
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }]
+    })
+  });
+  if (!response.ok){
+    let bodyText = '';
+    try { bodyText = await response.text(); } catch (e){}
+    throw new Error('API 回應失敗 (' + response.status + ')' + (bodyText ? '：' + bodyText.slice(0, 200) : ''));
+  }
+  const data = await response.json();
+  const textBlock = (data.content || []).find(b => b.type === 'text');
+  if (!textBlock) throw new Error('沒有收到回應內容，原始回應：' + JSON.stringify(data).slice(0, 300));
+  const usage = data.usage;
+  const tokensUsed = usage ? (Number(usage.input_tokens || 0) + Number(usage.output_tokens || 0)) : estimateTokensFallback(systemPrompt + userContent, textBlock.text);
+  return { text: textBlock.text, truncated: data.stop_reason === 'max_tokens', tokensUsed, tokensExact: !!usage };
+}
+
+/* ---------------- Claude (Anthropic) —— 使用者自行貼上的 API Key ---------------- */
+async function fetchClaudeText(systemPrompt, userContent, maxTokens, key){
+  const doFetch = () => fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-5',
+      max_tokens: clampMaxTokens('claude', maxTokens),
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  });
+  const resp = await fetchWithRetry(doFetch, 2);
+  if (!resp.ok){
+    const errText = await resp.text().catch(() => '');
+    if (resp.status === 401) throw new Error('auth_error:Claude API Key 無效或已過期，請重新確認金鑰');
+    if (resp.status === 429) throw new Error('rate_limit:Claude API 額度已達上限，已自動重試但仍失敗，請稍後再試');
+    if (resp.status === 503) throw new Error('overloaded:Claude 伺服器目前負載過高（503），已自動重試但仍無法回應，請稍後再試');
+    throw new Error('api_error:' + resp.status + '：' + errText.slice(0, 200));
+  }
+  const data = await resp.json();
+  const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+  if (!textBlocks.length) throw new Error('empty_response:Claude 回應中沒有文字內容');
+  const text = textBlocks.join('');
+  const usage = data.usage;
+  const tokensUsed = usage ? (Number(usage.input_tokens || 0) + Number(usage.output_tokens || 0)) : estimateTokensFallback(systemPrompt + userContent, text);
+  return { text, truncated: data.stop_reason === 'max_tokens', tokensUsed, tokensExact: !!usage };
+}
+
+/* ---------------- Gemini (Google AI Studio) ---------------- */
+async function fetchGeminiText(systemPrompt, userContent, maxTokens, key){
+  const doFetch = () => fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: userContent }] }],
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      generationConfig: { maxOutputTokens: clampMaxTokens('gemini', maxTokens) }
+    })
+  });
+  let resp;
+  try { resp = await fetchWithRetry(doFetch, 2); }
+  catch (networkErr){ throw new Error('cors_or_network:Gemini API 連線失敗，最常見原因是瀏覽器跨來源請求（CORS）被阻擋，建議改用其他供應商。'); }
+  if (!resp.ok){
+    const errText = await resp.text().catch(() => '');
+    if (resp.status === 401 || resp.status === 403) throw new Error('auth_error:Gemini API Key 無效、未啟用或權限不足，請至 aistudio.google.com/apikey 確認');
+    if (resp.status === 429) throw new Error('rate_limit:Gemini API 額度已達上限，已自動重試但仍失敗，請稍後再試');
+    if (resp.status === 503) throw new Error('overloaded:Gemini 模型目前負載過高（503），已自動重試但仍無法回應，請稍後再試或改用其他供應商');
+    throw new Error('api_error:' + resp.status + '：' + errText.slice(0, 200));
+  }
+  const data = await resp.json();
+  const candidate = data.candidates && data.candidates[0];
+  const parts = (candidate && candidate.content && candidate.content.parts) || [];
+  const text = parts.filter(p => p.text).map(p => p.text).join('');
+  const finishReason = candidate && candidate.finishReason;
+  if (!text){
+    if (finishReason && finishReason !== 'STOP') throw new Error('empty_response:Gemini 回應被中斷（finishReason: ' + finishReason + '），可能是輸出超過長度限制，請稍後再試');
+    throw new Error('empty_response:Gemini 回應中沒有文字內容');
+  }
+  const usageMeta = data.usageMetadata;
+  const tokensUsed = usageMeta ? Number(usageMeta.totalTokenCount || 0) : estimateTokensFallback(systemPrompt + userContent, text);
+  return { text, truncated: finishReason === 'MAX_TOKENS', tokensUsed, tokensExact: !!usageMeta };
+}
+
+/* ---------------- ChatGPT (OpenAI) ---------------- */
+async function fetchChatGPTText(systemPrompt, userContent, maxTokens, key){
+  const doFetch = () => fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: clampMaxTokens('chatgpt', maxTokens),
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ]
+    })
+  });
+  let resp;
+  try { resp = await fetchWithRetry(doFetch, 2); }
+  catch (networkErr){ throw new Error('cors_or_network:ChatGPT (OpenAI) API 連線失敗，可能是瀏覽器跨來源請求（CORS）被阻擋，建議改用其他供應商。'); }
+  if (!resp.ok){
+    const errText = await resp.text().catch(() => '');
+    if (resp.status === 401) throw new Error('auth_error:OpenAI API Key 無效或已過期，請重新確認金鑰');
+    if (resp.status === 429) throw new Error('rate_limit:OpenAI API 額度已達上限，已自動重試但仍失敗，請稍後再試');
+    if (resp.status === 503) throw new Error('overloaded:OpenAI 伺服器目前負載過高（503），已自動重試但仍無法回應，請稍後再試');
+    throw new Error('api_error:' + resp.status + '：' + errText.slice(0, 200));
+  }
+  const data = await resp.json();
+  const choice = data.choices && data.choices[0];
+  const text = choice && choice.message && choice.message.content;
+  if (!text){
+    if (choice && choice.finish_reason === 'length') throw new Error('empty_response:ChatGPT 回應被截斷（finish_reason: length，輸出超過長度限制），請稍後再試或增加長度上限');
+    throw new Error('empty_response:ChatGPT 回應中沒有文字內容');
+  }
+  const usage = data.usage;
+  const tokensUsed = usage ? Number(usage.total_tokens || 0) : estimateTokensFallback(systemPrompt + userContent, text);
+  return { text, truncated: choice && choice.finish_reason === 'length', tokensUsed, tokensExact: !!usage };
+}
+
+/* ---------------- Agnes AI（OpenAI 相容端點） ---------------- */
+async function fetchAgnesText(systemPrompt, userContent, maxTokens, key){
+  let baseUrl = 'https://apihub.agnes-ai.com/v1';
+  try{
+    const stored = sessionStorage.getItem(RM_KEY_PREFIX+'baseurl_agnes');
+    if (stored && stored.trim()) baseUrl = stored.trim().replace(/\/+$/, '');
+  }catch(e){}
+  const doFetch = () => fetch(baseUrl + '/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'agnes-2.0-flash',
+      max_tokens: clampMaxTokens('agnes', maxTokens),
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent }
+      ]
+    })
+  });
+  let resp;
+  // Agnes AI 實測連線穩定度略低於 Claude／Gemini／OpenAI，重試次數加到 3 次（共 4 次嘗試）。
+  try { resp = await fetchWithRetry(doFetch, 3); }
+  catch (networkErr){ throw new Error('cors_or_network:Agnes AI API 連線失敗（CORS 或 DNS 錯誤，已自動重試 3 次仍失敗）。目前端點：' + baseUrl + '，請確認 Base URL 是否正確；若持續失敗，建議改用 Claude／Gemini／ChatGPT。'); }
+  if (!resp.ok){
+    const errText = await resp.text().catch(() => '');
+    if (resp.status === 401 || resp.status === 403) throw new Error('auth_error:Agnes AI API Key 無效或權限不足，請確認金鑰是否正確');
+    if (resp.status === 429) throw new Error('rate_limit:Agnes AI API 額度已達上限，已自動重試但仍失敗，請稍後再試');
+    if (resp.status === 503) throw new Error('overloaded:Agnes AI 伺服器目前負載過高（503），已自動重試但仍無法回應，請稍後再試');
+    throw new Error('api_error:' + resp.status + '：' + errText.slice(0, 200));
+  }
+  const data = await resp.json();
+  const choice = data.choices && data.choices[0];
+  const text = choice && choice.message && choice.message.content;
+  if (!text){
+    // 實測 Agnes AI 在輸出被截斷（超過 max_tokens）時，有時會回傳完全空白的
+    // content，而不是回傳「寫到一半」的內容，因此這裡明確區分「被截斷」與
+    // 「單純沒有內容」兩種情況，方便判斷是否該提高 maxTokens。
+    if (choice && choice.finish_reason === 'length') throw new Error('empty_response:Agnes AI 回應被截斷（finish_reason: length，輸出超過長度限制），請稍後再試或增加長度上限');
+    throw new Error('empty_response:Agnes AI 回應中沒有文字內容');
+  }
+  const usage = data.usage;
+  const tokensUsed = usage ? Number(usage.total_tokens || 0) : estimateTokensFallback(systemPrompt + userContent, text);
+  return { text, truncated: choice && choice.finish_reason === 'length', tokensUsed, tokensExact: !!usage };
+}
+
+/* =========================================================
+   v3.0.99：新增「階段耗時歷史紀錄」與「用量附加資訊」，供「一鍵產生全部
+   分析」在依序執行時，即時顯示目前跑到哪一項、預計還要多久、已用多少
+   tokens。歷史紀錄只存在本次瀏覽器分頁（sessionStorage），跑過幾次後
+   預估時間會越來越準；沒有歷史紀錄時使用保守的預設猜測值。
+========================================================= */
+const RM_STAGE_HISTORY_KEY = RM_KEY_PREFIX + 'stageDurationHistory';
+function getStageHistory(){
+  try { return JSON.parse(sessionStorage.getItem(RM_STAGE_HISTORY_KEY) || '{}'); }
+  catch (e){ return {}; }
+}
+function recordStageDuration(label, ms){
+  try {
+    const hist = getStageHistory();
+    if (!hist[label]) hist[label] = [];
+    hist[label].push(ms);
+    if (hist[label].length > 5) hist[label] = hist[label].slice(-5);
+    sessionStorage.setItem(RM_STAGE_HISTORY_KEY, JSON.stringify(hist));
+  } catch (e){}
+}
+const RM_STAGE_DEFAULT_MS = { match: 14000, healthcheck: 28000, interviewSetup: 12000 };
+function estimateStageDuration(label){
+  const hist = getStageHistory();
+  const arr = hist[label];
+  if (arr && arr.length) return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  return RM_STAGE_DEFAULT_MS[label] || 15000;
+}
+
+/* ---------------- 統一入口（依目前選擇的供應商分派） ----------------
+   呼叫端的用法完全不變：callClaude(systemPrompt, userContent, maxTokens) -> 回傳解析後的 JSON 物件。
+   若已設定任一供應商的 API Key，會改用該供應商的真實 API；
+   若未設定任何金鑰，則沿用系統內建連線（原本的行為）。
+   第 4 個參數 opts（選填）：{ label } —— 若提供 label，會把這次呼叫的
+   實際耗時記錄進「階段耗時歷史」，用於之後估算「一鍵產生全部分析」還
+   需要多久；同時回傳的 JSON 物件上會附加一個 __meta 欄位
+   { tokensUsed, tokensExact, durationMs, provider, label }，
+   供呼叫端（例如 runAll）讀取本次實際用量與耗時，不影響原本欄位。 */
+async function callClaude(systemPrompt, userContent, maxTokens, opts){
+  const label = opts && opts.label;
+  const startedAt = Date.now();
+  let result = null, usedProvider = 'builtin';
+  try {
+    const provider = getProvider();
+    const key = provider ? getKeyFor(provider) : '';
+    if (key && provider === 'claude'){ result = await fetchClaudeText(systemPrompt, userContent, maxTokens, key); usedProvider = 'claude'; }
+    else if (key && provider === 'gemini'){ result = await fetchGeminiText(systemPrompt, userContent, maxTokens, key); usedProvider = 'gemini'; }
+    else if (key && provider === 'chatgpt'){ result = await fetchChatGPTText(systemPrompt, userContent, maxTokens, key); usedProvider = 'chatgpt'; }
+    else if (key && provider === 'agnes'){ result = await fetchAgnesText(systemPrompt, userContent, maxTokens, key); usedProvider = 'agnes'; }
+    else { result = await fetchClaudeBuiltInText(systemPrompt, userContent, maxTokens); usedProvider = 'builtin'; }
+
+    const rawText = result.text;
+    try {
+      const parsed = parseJsonLoose(rawText);
+      const durationMs = Date.now() - startedAt;
+      addDebugLog({ type: 'success', provider: usedProvider, label, durationMs, promptChars: (systemPrompt + userContent).length, responseChars: rawText.length, tokensUsed: result.tokensUsed, tokensExact: !!result.tokensExact });
+      if (label) recordStageDuration(label, durationMs);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)){
+        parsed.__meta = { tokensUsed: result.tokensUsed || 0, tokensExact: !!result.tokensExact, durationMs, provider: usedProvider, label };
+      }
+      return parsed;
+    } catch (parseErr){
+      // 解析失敗時，若這次呼叫本來就已經被供應商標記為「輸出被截斷」，
+      // 給出更明確的原因（而不是單純的「無法解析」），方便判斷是否該調高 maxTokens。
+      if (result.truncated){
+        const actualLimit = clampMaxTokens(usedProvider, maxTokens);
+        throw new Error('truncated:AI 回應在完成前被截斷（超過本次呼叫的長度上限，約 ' + actualLimit + ' tokens' + (actualLimit < (maxTokens || 1200) ? '，已被供應商上限夾住，實際小於程式設定的 ' + (maxTokens || 1200) : '') + '），導致 JSON 不完整。建議稍後再試一次，或改用回應較精簡的供應商。');
+      }
+      throw parseErr;
+    }
+  } catch (err){
+    addDebugLog({ type: 'error', provider: usedProvider, label, message: String(err && err.message || err), name: err && err.name, durationMs: Date.now() - startedAt });
+    throw err;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function(){ refreshApiUi(); });
+
+/* =========================================================
+   v2.8.99 修正：四層 JSON 解析（原本只有三層、且沒有處理「尾隨逗號」）。
+   實測 Agnes AI（以及其他較平價的 OpenAI 相容供應商）常見兩種格式錯誤，
+   原本的解析器完全沒有處理第①種，導致這類供應商的回應大量解析失敗：
+   ① 物件或陣列結尾多一個逗號，例如 {"a":1,"b":2,} 或 ["x","y",]
+      —— 這是 JSON.parse 會直接拋錯、但視覺上很容易被忽略的錯誤。
+   ② 字串內容中夾帶未轉義的雙引號或裸露的換行/Tab 字元。
+   兩種問題可能同時出現，因此採用「多種修復函式排列組合、依序嘗試」的
+   四層策略，而不是只修一種就放棄。
+========================================================= */
+function stripTrailingCommas(t){
+  return t.replace(/,(\s*[}\]])/g, '$1');
+}
+
+function unifiedJsonRepair(text){
+  let out = '';
+  let inString = false;
+  let pendingInnerOpen = false;
+  let i = 0;
+  while (i < text.length){
+    const ch = text[i];
+    if (ch === '\\' && inString){
+      out += ch + (text[i + 1] || '');
+      i += 2;
+      continue;
+    }
+    if (ch === '"'){
+      if (!inString){
+        inString = true; pendingInnerOpen = false;
+        out += ch;
+      } else {
+        let j = i + 1;
+        while (j < text.length && /\s/.test(text[j])) j++;
+        const nextCh = text[j];
+        const isStructuralEnd = (nextCh === undefined || nextCh === ',' || nextCh === '}' || nextCh === ']' || nextCh === ':');
+        if (isStructuralEnd && !pendingInnerOpen){
+          inString = false;
+          out += ch;
+        } else if (!pendingInnerOpen){
+          // 字串中途出現的引號：視為使用者自己在引用文字，轉成中文引號避免破壞 JSON 結構
+          pendingInnerOpen = true;
+          out += '\u300C'; // 「
+        } else {
+          pendingInnerOpen = false;
+          out += '\u300D'; // 」
+        }
+      }
+    } else if (inString && (ch === '\n' || ch === '\r' || ch === '\t')){
+      if (ch === '\n') out += '\\n';
+      else if (ch === '\r') out += '\\r';
+      else out += '\\t';
+    } else {
+      out += ch;
+    }
+    i++;
+  }
+  return out;
+}
+
+function parseJsonLoose(text){
+  const original = text;
+  let t = String(text == null ? '' : text).trim();
+  t = t.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+  // 找出第一個 { 或 [ 到對應最後一個 } 或 ] 之間的內容，去除模型可能加的
+  // 前後說明文字（例如「好的，以下是分析結果：...」），Agnes 這類供應商比
+  // Claude 更常在 JSON 前後夾帶這類客套話。
+  const firstObj = t.indexOf('{');
+  const firstArr = t.indexOf('[');
+  let start;
+  if (firstObj === -1 && firstArr === -1) start = -1;
+  else if (firstObj === -1) start = firstArr;
+  else if (firstArr === -1) start = firstObj;
+  else start = Math.min(firstObj, firstArr);
+  if (start >= 0){
+    const isArr = t[start] === '[';
+    const end = isArr ? t.lastIndexOf(']') : t.lastIndexOf('}');
+    if (end > start) t = t.slice(start, end + 1);
+  }
+
+  const attempts = [
+    { label: '第一層：標準解析', fn: s => s },
+    { label: '第二層：移除尾隨逗號', fn: s => stripTrailingCommas(s) },
+    { label: '第三層：修復未轉義引號／控制字元', fn: s => unifiedJsonRepair(s) },
+    { label: '第四層：修復引號控制字元＋移除尾隨逗號', fn: s => stripTrailingCommas(unifiedJsonRepair(s)) }
+  ];
+  let lastErr = null;
+  for (const attempt of attempts){
+    try {
+      const parsed = JSON.parse(attempt.fn(t));
+      if (attempt.label !== '第一層：標準解析'){
+        console.info('[parseJsonLoose] 已透過「' + attempt.label + '」修復成功');
+      }
+      return parsed;
+    } catch (e){ lastErr = e; }
+  }
+  console.warn('[parseJsonLoose] 四層解析全部失敗，原始回應：', original);
+  throw new Error('無法解析 AI 回傳的內容，請再試一次' + (lastErr ? '（' + lastErr.message + '）' : ''));
+}
+
+const HONESTY_RULE = `【誠實原則，最優先】只能依據履歷中「實際存在」的經驗、技能與成果作答。真正吻合就明確寫出來；只是部分相關或程度不足，要用保守、如實的說法呈現，不可誇大或編造成完全符合；完全找不到證據的項目不要硬寫進去。目標是讓內容經得起面試官檢驗，而不是每一項都硬湊成 100% 符合。`;
+
+const JSON_SAFETY_RULE = `JSON 格式安全規則：字串內容中一律使用「」來標示引用文字，不可使用直式雙引號 " ；字串內容中不可包含真正的換行字元，需要換行請用 \\n 表示。這是為了確保輸出是可以被直接解析的合法 JSON。`;
+
+/* =========================================================
+   併發保護：所有會呼叫 AI 的按鈕共用同一把忙碌鎖，避免「一鍵產生
+   全部」執行中又手動觸發個別分頁，造成重複呼叫、浪費 API 成本。
+========================================================= */
+const AI_BUTTON_IDS = ['generateBtn1', 'generateBtn2', 'generateBtn4', 'runAllBtn', 'generateReverseBtn', 'analyzeRejectionBtn', 'generateBtn6', 'generateBtn7'];
+let activeRunCount = 0;
+
+function beginRun(){
+  activeRunCount++;
+  if (activeRunCount === 1){
+    AI_BUTTON_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+  }
+}
+
+function endRun(){
+  activeRunCount = Math.max(0, activeRunCount - 1);
+  if (activeRunCount === 0){
+    updateAllButtonStates();
+    updateRejectionAnalysisButtonState();
+  }
+}
+
+/* ---------- global resume upload ---------- */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const fileChip = document.getElementById('fileChip');
+const fileNameEl = document.getElementById('fileName');
+const removeFileBtn = document.getElementById('removeFile');
+const pdfStatus = document.getElementById('pdfStatus');
+const sharedJobDesc = document.getElementById('sharedJobDesc');
+
+const jobDescSnapshot = { 1: null, 2: null, 4: null, 6: null, 7: null };
+function currentInputKey(){ return resumeFileLabel + '|' + sharedJobDesc.value.trim(); }
+
+function setTabDot(tabNum, state){
+  const dot = document.getElementById('dot' + tabNum);
+  if (!dot) return;
+  dot.classList.remove('done', 'stale', 'show');
+  if (state === 'hide') return;
+  dot.classList.add('show', state);
+}
+
+function refreshStaleIndicators(){
+  const current = currentInputKey();
+  [1, 2, 4, 6, 7].forEach(n => {
+    const banner = document.getElementById('staleBanner' + n);
+    if (jobDescSnapshot[n] === null) return;
+    const stale = jobDescSnapshot[n] !== current;
+    if (banner) banner.classList.toggle('show', stale);
+    setTabDot(n, stale ? 'stale' : 'done');
+  });
+  if (jobDescSnapshotReverse.value !== null){
+    const reverseBanner = document.getElementById('staleBannerReverse');
+    if (reverseBanner) reverseBanner.classList.toggle('show', jobDescSnapshotReverse.value !== current);
+  }
+}
+
+/* =========================================================
+   草稿自動保存：履歷內容、職缺說明與已產生的 AI 結果會自動存到
+   使用者自己的儲存空間，重新整理頁面時可以選擇復原。
+========================================================= */
+let lastResult1 = null, lastResult2 = null, lastResult4 = null, lastResult6 = null, lastResult7 = null;
+
+/* v3.3.0：提案簡報 5 款版型（世界級企業簡報常見風格）。切換版型只換 CSS 變數，不需重新呼叫 AI。 */
+const DECK_THEMES = [
+  { id:'mckinsey', name:'顧問經典・深藍燙金', desc:'國際顧問公司常見風格，沉穩專業，適合外商、金融、顧問業', bg:'#ffffff', fg:'#1B2A4A', accent:'#B8934A' },
+  { id:'corpblue', name:'企業商務・天藍白', desc:'國際企業通用商務風格，清爽好讀，各產業皆適用', bg:'#ffffff', fg:'#0B2545', accent:'#0B5FCC' },
+  { id:'techdark', name:'科技新創・暗黑霓虹', desc:'深色底＋亮色重點，適合科技業、新創、產品／設計職位', bg:'#12141A', fg:'#EDEDED', accent:'#3FD0FF' },
+  { id:'swiss', name:'瑞士極簡・黑白網格', desc:'大量留白與黑白線條，適合設計、建築、精品等重視質感的產業', bg:'#ffffff', fg:'#0A0A0A', accent:'#0A0A0A' },
+  { id:'sealgold', name:'東方雅緻・硃紅燙金', desc:'本站經典配色，沉穩內斂又帶點文化質感，適合傳產、文創、公部門', bg:'#F6F1E7', fg:'#1F2A3C', accent:'#9C7A3C' },
+];
+let selectedDeckTheme = 'mckinsey';
+
+/* v3.3.2：客製履歷 5 款排版版型。3 款為單欄結構（僅色彩／字體不同，layout:'standard'），
+   企業商務為雙欄側邊結構（layout:'sidebar'），科技新創為深色標題列結構（layout:'darkband'）。
+   切換版型不需重新呼叫 AI，直接用既有的 lastResult6 資料重新渲染 DOM。 */
+const RESUME_THEMES = [
+  { id:'mckinsey', name:'顧問經典・單欄序列', desc:'國際顧問與外商最常見的沉穩單欄排版，適合外商、金融、顧問業', layout:'standard', bg:'#ffffff', fg:'#1B2A4A', accent:'#B8934A' },
+  { id:'corpblue', name:'企業商務・雙欄側邊', desc:'左側聯絡資訊＋技能欄、右側經歷主欄，資訊層次分明，各產業皆適用', layout:'sidebar', bg:'#ffffff', fg:'#0B2545', accent:'#0B5FCC' },
+  { id:'techdark', name:'科技新創・深色標題列', desc:'頂部深色標題色塊＋亮色重點，年輕俐落，適合科技業、新創、產品／設計職位', layout:'darkband', bg:'#12141A', fg:'#EDEDED', accent:'#3FD0FF' },
+  { id:'swiss', name:'瑞士極簡・網格線條', desc:'大量留白與黑白線條分隔，去除裝飾，適合設計、建築、精品等重視質感的產業', layout:'standard', bg:'#ffffff', fg:'#0A0A0A', accent:'#0A0A0A' },
+  { id:'sealgold', name:'東方雅緻・硃紅燙金', desc:'本站經典配色，沉穩內斂又帶文化質感，適合傳產、文創、公部門', layout:'standard', bg:'#F6F1E7', fg:'#1F2A3C', accent:'#9C7A3C' },
+];
+let selectedResumeTheme = 'mckinsey';
+
+function renderResumeThemeSwatchHtml(t){
+  return `<div class="dtc-swatch" style="background:${t.bg}">
+    <span style="top:10px; width:58%; background:${t.fg}; opacity:.85;"></span>
+    <span style="top:22px; width:38%; background:${t.accent};"></span>
+    <span style="top:34px; width:70%; background:${t.fg}; opacity:.35;"></span>
+  </div>`;
+}
+
+/* mode 'pick'：產生前的完整卡片選擇器；mode 'switch'：產生後的精簡按鈕列（即時換版型，不重新產生） */
+function renderResumeThemePicker(containerId, mode){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (mode === 'switch'){
+    el.innerHTML = RESUME_THEMES.map(t =>
+      `<button type="button" class="${t.id === selectedResumeTheme ? 'active' : ''}" data-theme="${t.id}">${escapeHtml(t.name)}</button>`
+    ).join('');
+    el.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedResumeTheme = btn.dataset.theme;
+        if (lastResult6) renderTailoredResume(lastResult6);
+        renderResumeThemePicker('resumeTemplatePicker', 'pick');
+        saveDraft();
+      });
+    });
+    return;
+  }
+  el.innerHTML = RESUME_THEMES.map(t => `
+    <div class="deck-template-card${t.id === selectedResumeTheme ? ' selected' : ''}" data-theme="${t.id}">
+      ${renderResumeThemeSwatchHtml(t)}
+      <div class="dtc-name">${escapeHtml(t.name)}</div>
+      <div class="dtc-desc">${escapeHtml(t.desc)}</div>
+    </div>`).join('');
+  el.querySelectorAll('.deck-template-card').forEach(card => {
+    card.addEventListener('click', () => {
+      selectedResumeTheme = card.dataset.theme;
+      renderResumeThemePicker(containerId, 'pick');
+      if (lastResult6){
+        renderTailoredResume(lastResult6);
+        saveDraft();
+      }
+    });
+  });
+}
+
+function renderDeckThemeSwatchHtml(t){
+  return `<div class="dtc-swatch" style="background:${t.bg}">
+    <span style="top:10px; width:58%; background:${t.fg}; opacity:.85;"></span>
+    <span style="top:22px; width:38%; background:${t.accent};"></span>
+    <span style="top:34px; width:70%; background:${t.fg}; opacity:.35;"></span>
+  </div>`;
+}
+
+/* mode 'pick'：產生前的完整卡片選擇器；mode 'switch'：產生後的精簡按鈕列（即時換版型，不重新產生） */
+function renderDeckThemePicker(containerId, mode){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (mode === 'switch'){
+    el.innerHTML = DECK_THEMES.map(t =>
+      `<button type="button" class="${t.id === selectedDeckTheme ? 'active' : ''}" data-theme="${t.id}">${escapeHtml(t.name)}</button>`
+    ).join('');
+    el.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedDeckTheme = btn.dataset.theme;
+        applyDeckThemeToExport();
+        renderDeckThemePicker(containerId, 'switch');
+        renderDeckThemePicker('deckTemplatePicker', 'pick');
+        saveDraft();
+      });
+    });
+    return;
+  }
+  el.innerHTML = DECK_THEMES.map(t => `
+    <div class="deck-template-card${t.id === selectedDeckTheme ? ' selected' : ''}" data-theme="${t.id}">
+      ${renderDeckThemeSwatchHtml(t)}
+      <div class="dtc-name">${escapeHtml(t.name)}</div>
+      <div class="dtc-desc">${escapeHtml(t.desc)}</div>
+    </div>`).join('');
+  el.querySelectorAll('.deck-template-card').forEach(card => {
+    card.addEventListener('click', () => {
+      selectedDeckTheme = card.dataset.theme;
+      renderDeckThemePicker(containerId, 'pick');
+      if (lastResult7){
+        applyDeckThemeToExport();
+        renderDeckThemePicker('deckThemeSwitch', 'switch');
+        saveDraft();
+      }
+    });
+  });
+}
+
+function applyDeckThemeToExport(){
+  const area = document.getElementById('slidesExportArea');
+  if (!area) return;
+  DECK_THEMES.forEach(t => area.classList.remove('theme-' + t.id));
+  area.classList.add('theme-' + selectedDeckTheme);
+}
+const lastResultReverse = { value: null };
+let saveDraftTimer = null;
+
+function scheduleDraftSave(){
+  clearTimeout(saveDraftTimer);
+  saveDraftTimer = setTimeout(saveDraft, 800);
+}
+
+async function saveDraft(){
+  try {
+    const draft = {
+      resumeText, resumeFileLabel,
+      jobType: document.getElementById('jobType').value,
+      sharedJobDesc: sharedJobDesc.value,
+      marketStats: marketStatsInput ? marketStatsInput.value : '',
+      tab1: lastResult1 ? { parsed: lastResult1, snapshotKey: jobDescSnapshot[1] } : null,
+      tab2: lastResult2 ? { parsed: lastResult2, snapshotKey: jobDescSnapshot[2] } : null,
+      tab4: lastResult4 ? { parsed: lastResult4, snapshotKey: jobDescSnapshot[4] } : null,
+      tab6: lastResult6 ? { parsed: lastResult6, snapshotKey: jobDescSnapshot[6], theme: selectedResumeTheme } : null,
+      tab7: lastResult7 ? { parsed: lastResult7, snapshotKey: jobDescSnapshot[7], theme: selectedDeckTheme } : null,
+      dt7ExtraContext: (document.getElementById('dt7ExtraContext') || {}).value || '',
+      reverse: lastResultReverse.value ? { parsed: lastResultReverse.value, snapshotKey: jobDescSnapshotReverse.value } : null,
+      savedAt: new Date().toISOString()
+    };
+    await window.storage.set('draft', JSON.stringify(draft), false);
+  } catch (e){
+    console.error('草稿保存失敗', e);
+  }
+}
+
+async function checkForDraft(){
+  let draft = null;
+  try {
+    const result = await window.storage.get('draft', false);
+    if (result && result.value) draft = JSON.parse(result.value);
+  } catch (e){
+    draft = null;
+  }
+  const hasContent = draft && (draft.resumeFileLabel || (draft.sharedJobDesc && draft.sharedJobDesc.trim().length > 10));
+  if (!hasContent) return;
+  showDraftBanner(draft);
+}
+
+function showDraftBanner(draft){
+  const banner = document.getElementById('draftBanner');
+  const text = document.getElementById('draftBannerText');
+  const when = draft.savedAt ? new Date(draft.savedAt).toLocaleString('zh-TW') : '';
+  text.textContent = `偵測到上次未完成的內容${when ? '（' + when + '）' : ''}，要復原履歷、職缺說明與已產生的結果嗎？`;
+  banner.style.display = 'flex';
+  document.getElementById('restoreDraftBtn').addEventListener('click', () => {
+    applyDraft(draft);
+    banner.style.display = 'none';
+  }, { once: true });
+  document.getElementById('dismissDraftBtn').addEventListener('click', async () => {
+    banner.style.display = 'none';
+    try { await window.storage.delete('draft', false); } catch (e){}
+  }, { once: true });
+}
+
+function applyDraft(draft){
+  // 舊草稿可能是在修正 PDF 擷取邏輯之前存的，這裡一併清掉殘留的 \u0000。
+  resumeText = (draft.resumeText || '').replace(/\u0000/g, '');
+  resumeFileLabel = draft.resumeFileLabel || '';
+  if (resumeText && resumeFileLabel){
+    fileNameEl.textContent = `${resumeFileLabel} · 已還原`;
+    fileChip.style.display = 'flex';
+    dropzone.style.display = 'none';
+    pdfStatus.textContent = '已解析（已還原）';
+    renderPdfPreview(resumeText);
+  }
+  if (draft.jobType) document.getElementById('jobType').value = draft.jobType;
+  sharedJobDesc.value = draft.sharedJobDesc || '';
+  document.getElementById('jdCountShared').textContent = sharedJobDesc.value.length + ' 字';
+  if (marketStatsInput) marketStatsInput.value = draft.marketStats || '';
+
+  if (draft.tab1 && draft.tab1.parsed){
+    renderMatchResults(draft.tab1.parsed);
+    lastResult1 = draft.tab1.parsed;
+    jobDescSnapshot[1] = draft.tab1.snapshotKey;
+    setTabDot(1, 'done');
+  }
+  if (draft.tab2 && draft.tab2.parsed){
+    renderHealthCheck(draft.tab2.parsed);
+    lastResult2 = draft.tab2.parsed;
+    jobDescSnapshot[2] = draft.tab2.snapshotKey;
+    setTabDot(2, 'done');
+  }
+  if (draft.tab4 && draft.tab4.parsed){
+    const questions = Array.isArray(draft.tab4.parsed.questions) ? draft.tab4.parsed.questions : [];
+    if (questions.length) renderInterviewQuestions(questions);
+    lastResult4 = draft.tab4.parsed;
+    jobDescSnapshot[4] = draft.tab4.snapshotKey;
+    setTabDot(4, 'done');
+  }
+  if (draft.reverse && draft.reverse.parsed){
+    renderReverseInterview(draft.reverse.parsed);
+    lastResultReverse.value = draft.reverse.parsed;
+    jobDescSnapshotReverse.value = draft.reverse.snapshotKey;
+  }
+  if (draft.tab6 && draft.tab6.parsed){
+    if (draft.tab6.theme && RESUME_THEMES.some(t => t.id === draft.tab6.theme)) selectedResumeTheme = draft.tab6.theme;
+    renderTailoredResume(draft.tab6.parsed);
+    lastResult6 = draft.tab6.parsed;
+    jobDescSnapshot[6] = draft.tab6.snapshotKey;
+    setTabDot(6, 'done');
+  }
+  renderResumeThemePicker('resumeTemplatePicker', 'pick');
+  const dt7ExtraContextEl = document.getElementById('dt7ExtraContext');
+  if (dt7ExtraContextEl) dt7ExtraContextEl.value = draft.dt7ExtraContext || '';
+  if (draft.tab7 && draft.tab7.parsed){
+    if (draft.tab7.theme && DECK_THEMES.some(t => t.id === draft.tab7.theme)) selectedDeckTheme = draft.tab7.theme;
+    renderProposalDeck(draft.tab7.parsed);
+    lastResult7 = draft.tab7.parsed;
+    jobDescSnapshot[7] = draft.tab7.snapshotKey;
+    setTabDot(7, 'done');
+  }
+  renderDeckThemePicker('deckTemplatePicker', 'pick');
+
+  updateAllButtonStates();
+  refreshStaleIndicators();
+}
+
+sharedJobDesc.addEventListener('input', () => {
+  document.getElementById('jdCountShared').textContent = sharedJobDesc.value.length + ' 字';
+  updateAllButtonStates();
+  refreshStaleIndicators();
+  scheduleDraftSave();
+});
+
+document.getElementById('jobType').addEventListener('change', scheduleDraftSave);
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+removeFileBtn.addEventListener('click', () => {
+  resumeText = ''; resumeFileLabel = '';
+  fileInput.value = ''; fileChip.style.display = 'none'; dropzone.style.display = 'block';
+  pdfStatus.textContent = '尚未上傳'; pdfStatus.classList.remove('err');
+  hidePdfPreview();
+  updateAllButtonStates();
+  refreshStaleIndicators();
+  saveDraft();
+});
+
+/* =========================================================
+   v3.2.15 新增①：PDF 文字擷取預覽（前 150 字…後 150 字）。
+   讓使用者上傳履歷後，能親眼確認 pdf.js 實際擷取到的文字內容是否完整、
+   有沒有明顯缺漏或亂碼，而不是只能盲目相信「已解析」三個字。
+   預設只顯示頭尾各 150 字（避免整份履歷洗版），並提供「顯示完整擷取
+   文字」的展開按鈕，方便進一步比對。
+========================================================= */
+const pdfPreviewBox = document.getElementById('pdfPreviewBox');
+const pdfPreviewToggleBtn = document.getElementById('pdfPreviewToggleBtn');
+let pdfPreviewFullText = '';
+let pdfPreviewExpanded = false;
+
+function renderPdfPreview(text){
+  pdfPreviewFullText = text || '';
+  pdfPreviewExpanded = false;
+  if (!pdfPreviewFullText){ hidePdfPreview(); return; }
+  pdfPreviewToggleBtn.style.display = 'inline-block';
+  pdfPreviewToggleBtn.textContent = '顯示完整擷取文字';
+  renderPdfPreviewContent();
+}
+
+function renderPdfPreviewContent(){
+  const text = pdfPreviewFullText;
+  pdfPreviewBox.style.display = 'block';
+  if (pdfPreviewExpanded){
+    pdfPreviewBox.innerHTML = '<span class="ppb-label">完整擷取文字（共 ' + text.length + ' 字）：</span>' + escapeHtml(text);
+    return;
+  }
+  if (text.length <= 320){
+    pdfPreviewBox.innerHTML = '<span class="ppb-label">擷取文字預覽（共 ' + text.length + ' 字，內容不多，已完整顯示）：</span>' + escapeHtml(text);
+    return;
+  }
+  const head = text.slice(0, 150);
+  const tail = text.slice(-150);
+  const omitted = text.length - 300;
+  pdfPreviewBox.innerHTML = '<span class="ppb-label">擷取文字預覽（共 ' + text.length + ' 字，前 150 字…後 150 字）：</span>' +
+    escapeHtml(head) + '<span class="ppb-ellipsis"> ......（中間省略 ' + omitted + ' 字）...... </span>' + escapeHtml(tail);
+}
+
+function hidePdfPreview(){
+  pdfPreviewFullText = '';
+  pdfPreviewExpanded = false;
+  pdfPreviewBox.style.display = 'none';
+  pdfPreviewBox.innerHTML = '';
+  pdfPreviewToggleBtn.style.display = 'none';
+}
+
+pdfPreviewToggleBtn.addEventListener('click', () => {
+  pdfPreviewExpanded = !pdfPreviewExpanded;
+  pdfPreviewToggleBtn.textContent = pdfPreviewExpanded ? '收合，只顯示前後 150 字' : '顯示完整擷取文字';
+  renderPdfPreviewContent();
+});
+
+/* =========================================================
+   v2.8.99 修正②：PDF 文字擷取品質檢查。
+   實測發現：部分 PDF（尤其是某些線上履歷產生器匯出的檔案，例如本次
+   用來測試的「游士賢.pdf」）內嵌字型的 ToUnicode 對照表本身就不完整，
+   導致無論用哪個 PDF 解析函式庫（pdf.js／pdfminer 等）擷取文字，都會
+   有相當比例的字被還原成空白字元（\u0000）而不是原本的中文字，這是
+   PDF 檔案本身的問題，不是本工具解析邏輯的錯誤，但若不處理，這些
+   \u0000 字元會混進送給 AI 的內容，除了讓 AI 讀到殘缺的履歷、影響
+   分析準確率之外，也可能造成 AI 因為要「猜測」殘缺內容而多花不少
+   token 在推敲文意，進而更容易撞到 maxTokens 上限、導致 JSON 被截斷
+   ——這正是「履歷健診」等功能出現 truncated／無法解析 錯誤的原因之一。
+   因此在指派 resumeText 前，先做兩件事：
+   ① 移除 \u0000（NUL）字元，避免無意義的殘缺字元混入 AI 提示詞。
+   ② 計算「疑似遺失字元」比例，若比例偏高，明確提示使用者此份 PDF
+      的文字圖層可能不完整，讓使用者自行判斷是否要改用貼上純文字。
+========================================================= */
+function sanitizeExtractedPdfText(rawText){
+  const totalLen = rawText.length || 1;
+  const nulCount = (rawText.match(/\u0000/g) || []).length;
+  const cleaned = rawText.replace(/\u0000/g, '').replace(/[ \t]{2,}/g, ' ');
+  const corruptionRatio = nulCount / totalLen;
+  return { cleaned, corruptionRatio, nulCount };
+}
+
+async function handleFile(file){
+  if (file.type !== 'application/pdf'){
+    pdfStatus.textContent = '請上傳 PDF 檔'; pdfStatus.classList.add('err'); return;
+  }
+  pdfStatus.classList.remove('err');
+  pdfStatus.textContent = '解析中…';
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    text = text.trim();
+    if (!text){
+      pdfStatus.textContent = '讀不到文字內容，可能是掃描檔'; pdfStatus.classList.add('err'); return;
+    }
+    const { cleaned, corruptionRatio } = sanitizeExtractedPdfText(text);
+    resumeText = cleaned; resumeFileLabel = file.name;
+    fileNameEl.textContent = `${file.name} · ${pdf.numPages} 頁 · ${cleaned.length} 字`;
+    fileChip.style.display = 'flex'; dropzone.style.display = 'none';
+    renderPdfPreview(cleaned);
+    if (corruptionRatio > 0.08){
+      const pct = Math.round(corruptionRatio * 100);
+      pdfStatus.textContent = '已解析，但偵測到約 ' + pct + '% 文字可能因字型編碼問題而遺失（常見於部分線上履歷產生器匯出的 PDF），可能影響 AI 分析準確率，建議改用「複製履歷文字」貼上或更換 PDF 來源';
+      pdfStatus.classList.add('err');
+    } else {
+      pdfStatus.textContent = '已解析';
+    }
+    updateAllButtonStates();
+    refreshStaleIndicators();
+    saveDraft();
+    uploadResumeToServer(file);
+  } catch (err){
+    console.error(err);
+    pdfStatus.textContent = '無法讀取這份 PDF'; pdfStatus.classList.add('err');
+  }
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 't5') renderBoard();
+    refreshStaleIndicators();
+  });
+});
+
+function updateAllButtonStates(){
+  const ready = resumeText.trim().length > 10 && sharedJobDesc.value.trim().length > 10;
+  document.getElementById('generateBtn1').disabled = !ready;
+  document.getElementById('generateBtn2').disabled = !ready;
+  document.getElementById('generateBtn4').disabled = !ready;
+  document.getElementById('generateBtn6').disabled = !ready;
+  document.getElementById('generateBtn7').disabled = !ready;
+  document.getElementById('runAllBtn').disabled = !ready;
+  updateReverseButtonState();
+}
+
+document.getElementById('runAllBtn').addEventListener('click', runAll);
+
+/* =========================================================
+   v3.0.99：「一鍵產生全部分析」改為依序（而非同時）執行三項分析，
+   避免三個高 token 上限的請求同時發送，瞬間衝過供應商的流量／額度限制
+   （TPM/RPM）而被擋下。改成依序執行後，同一時間只有 1 個請求在跑，
+   完全不會有「同時疊加」的尖峰負載問題；代價是總等待時間變長（大約
+   是三項時間加總，而不是取三項中最長的那項），因此加入即時進度顯示：
+   目前跑到第幾項、預計還要多久（依過去執行的歷史平均時間估算，沒有
+   歷史紀錄時用保守預設值，並以「約」標示，避免誤導）、目前為止已用
+   多少 tokens（優先採用 API 實際回傳的用量，若供應商沒提供則以概算
+   標示「約」）。
+========================================================= */
+async function runAll(){
+  const btn = document.getElementById('runAllBtn');
+  const statusLine = document.getElementById('runAllStatus');
+  if (resumeText.trim().length <= 10 || sharedJobDesc.value.trim().length <= 10){
+    statusLine.textContent = '請先上傳履歷並填寫職缺說明';
+    statusLine.classList.add('err');
+    return;
+  }
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+
+  const stages = [
+    { key: 'match', label: '媒合分析', run: runMatch },
+    { key: 'healthcheck', label: '履歷健診', run: runHealthCheck },
+    { key: 'interviewSetup', label: '模擬面試題目', run: runInterviewSetup }
+  ];
+
+  const runStartedAt = Date.now();
+  let cumulativeTokens = 0;
+  let anyEstimated = false; // 是否曾用到「概算」而非 API 實際用量，用來決定要不要顯示「約」
+  const results = {};
+  let tickTimer = null;
+
+  function fmtSec(ms){ return Math.max(0, Math.round(ms / 1000)); }
+
+  function renderProgress(stageIndex, stageStartedAt){
+    const stage = stages[stageIndex];
+    const elapsedTotal = Date.now() - runStartedAt;
+    const elapsedThisStage = Date.now() - stageStartedAt;
+    const estThisStage = estimateStageDuration(stage.key);
+    const remainThisStage = Math.max(0, estThisStage - elapsedThisStage);
+    const remainingStagesEstimate = stages.slice(stageIndex + 1).reduce((sum, s) => sum + estimateStageDuration(s.key), 0);
+    const remainMs = remainThisStage + remainingStagesEstimate;
+    statusLine.innerHTML = '<span class="spinner"></span>目前執行：' + stage.label + '（第 ' + (stageIndex + 1) + '／' + stages.length + ' 項）　已花時間 ' + fmtSec(elapsedTotal) + ' 秒　預計還需約 ' + fmtSec(remainMs) + ' 秒　目前已用 tokens ' + (anyEstimated ? '約 ' : '') + cumulativeTokens.toLocaleString();
+  }
+
+  for (let i = 0; i < stages.length; i++){
+    const stage = stages[i];
+    const stageStartedAt = Date.now();
+    if (tickTimer) clearInterval(tickTimer);
+    renderProgress(i, stageStartedAt);
+    tickTimer = setInterval(() => renderProgress(i, stageStartedAt), 1000);
+
+    const ok = await stage.run();
+
+    clearInterval(tickTimer);
+    results[stage.key] = ok;
+    const meta = rmStageStats[stage.key];
+    if (meta && meta.tokensUsed){
+      cumulativeTokens += meta.tokensUsed;
+      if (meta.tokensExact === false) anyEstimated = true;
+    }
+  }
+
+  const parts = [
+    '媒合分析' + (results.match ? '✓' : '✗'),
+    '履歷健診' + (results.healthcheck ? '✓' : '✗'),
+    '模擬面試題目' + (results.interviewSetup ? '✓' : '✗')
+  ];
+  const allOk = results.match && results.healthcheck && results.interviewSetup;
+  const totalElapsedSec = fmtSec(Date.now() - runStartedAt);
+  statusLine.textContent = (allOk ? '全部完成：' : '部分完成（失敗的可到該頁籤重試）：') + parts.join('　') + '　共花費 ' + totalElapsedSec + ' 秒，實際使用 tokens ' + (anyEstimated ? '約 ' : '') + cumulativeTokens.toLocaleString();
+  statusLine.classList.toggle('err', !allOk);
+  updateAllButtonStates();
+}
+
+/* v3.0.99：供「一鍵產生全部分析」讀取每一階段實際用量／耗時的暫存區。
+   由 runMatch／runHealthCheck／runInterviewSetup 各自寫入，runAll 依序
+   執行時在每個階段完成後讀取，藉此即時顯示「已用 tokens」。 */
+const rmStageStats = { match: null, healthcheck: null, interviewSetup: null };
+
+/* =========================================================
+   TAB 1 — 履歷媒合（配對分數 + 匹配重點 + 自我推薦信）
+========================================================= */
+document.getElementById('generateBtn1').addEventListener('click', runMatch);
+
+async function runMatch(){
+  const btn = document.getElementById('generateBtn1');
+  const statusLine = document.getElementById('statusLine1');
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在分析職缺與履歷⋯';
+
+  const jobDesc = sharedJobDesc.value.trim();
+  const jobType = document.getElementById('jobType').value;
+
+  const toneMap = {
+    '技術研發': '強調解決問題的方法、技術深度與可量化的成果指標（效能、穩定性、產出）。',
+    '業務/客戶': '強調數字成果（業績、客戶數、成交率）與對客戶關係/營收的具體影響。',
+    '行銷': '強調對品牌聲量、轉換率、成長數據等可衡量成果的影響。',
+    '管理/主管': '強調團隊協作、決策判斷與帶來的組織/專案成果，而非個人單打獨鬥的細節。',
+    '新鮮人/實習': '放寬「需完全對應經驗」的門檻，改強調學習力、基礎能力與可遷移技能，但仍需保守誠實，不可假裝有不存在的實務經驗。',
+    '其他/通用': '維持專業、平衡的敘述方式，不特別偏重單一面向。'
+  };
+
+  const systemPrompt = `你是專業且誠實的求職顧問，同時深諳企業用人邏輯。你會收到一段職缺說明與一份履歷全文（純文字，可能因 PDF 擷取而有斷行或排版問題，請忽略排版雜訊，專注於內容）。應徵者鎖定的職務類型為「${jobType}」，撰寫時請：${toneMap[jobType] || ''}
+
+${HONESTY_RULE}
+
+請完成三件事：
+0. 媒合分數：先評估履歷與這則職缺的「整體媒合程度」，給一個 matchScore（0-100 整數）。這個分數必須保守誠實，反映真實的專業符合度，不可為了鼓勵應徵者而灌水，也不可因為要寫推薦信就假裝很高分——分數與底下的匹配重點、推薦信內容必須互相一致。再用一句話 scoreReason 說明為什麼打這個分數，具體指出主要加分或扣分的原因。
+1. 匹配重點（4 到 6 點）：每點 1 句話，具體指出履歷中的哪項技能/經驗/成果對應職缺的哪項需求，依真實契合程度誠實表達，不使用空泛形容詞。
+2. 自我推薦信（繁體中文，約 280-420 字）：語氣專業、有自信、直接，避免謙卑討好或浮誇無依據的保證。內容需包含：
+- 開頭簡短說明應徵動機與對這個職缺/公司的理解
+- 用履歷中具體、真實的經驗或成果，對應職缺最核心的 2-3 項需求
+- 至少 1-2 段從「公司角度」出發，具體說明應徵者加入後能為公司解決什麼問題、帶來什麼價值、如何對業績/成本/獲利/客戶滿意度產生正面影響，須根據履歷真實經驗合理推論，不可空泛喊口號
+- 結尾清楚表達合作意願，語氣自信、不卑不亢
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件，不要任何其他文字、不要 markdown code fence，格式必須完全符合：
+{"matchScore": 0, "scoreReason": "...", "matchPoints": ["...", "..."], "coverLetter": "..."}`;
+
+  const userContent = `【職缺說明】\n${jobDesc}\n\n【履歷內容】\n${resumeText}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 22000, { label: 'match' });
+
+    // v3.3.5：推薦信偶爾會出現「其餘欄位都正常、只有 coverLetter 是空字串」的情況
+    // （AI 該次回應品質問題）。與其讓使用者自己發現空白再手動重按一次，這裡先自動
+    // 補一次「只重寫推薦信」的請求：沿用同一次分析出來的 matchScore／matchPoints，
+    // 確保分數與推薦信內容前後一致，也比整份重新產生省 token、更快。
+    let coverLetter = typeof parsed.coverLetter === 'string' ? parsed.coverLetter : '';
+    if (coverLetter.trim().length === 0){
+      statusLine.innerHTML = '<span class="spinner"></span>推薦信內容是空的，AI 正在自動重新產生一次⋯';
+      addDebugLog({ type: 'warning', label: 'match', message: 'coverLetter 為空字串，開始自動重試一次' });
+      try {
+        const retryLetter = await generateCoverLetterOnly(jobDesc, resumeText, jobType, toneMap[jobType] || '', parsed.matchScore, parsed.scoreReason, parsed.matchPoints);
+        if (retryLetter && retryLetter.trim().length > 0){
+          parsed.coverLetter = retryLetter;
+          addDebugLog({ type: 'info', label: 'match', message: '自動重試成功，已補上推薦信內容' });
+        } else {
+          addDebugLog({ type: 'warning', label: 'match', message: '自動重試後 coverLetter 仍為空字串' });
+        }
+      } catch (retryErr){
+        console.error('自動重試推薦信失敗', retryErr);
+        addDebugLog({ type: 'warning', label: 'match', message: '自動重試推薦信時發生錯誤：' + retryErr.message });
+      }
+    }
+
+    renderMatchResults(parsed);
+    statusLine.textContent = '完成';
+    jobDescSnapshot[1] = currentInputKey();
+    setTabDot(1, 'done');
+    refreshStaleIndicators();
+    lastResult1 = parsed;
+    rmStageStats.match = parsed.__meta || null;
+    saveDraft();
+    return true;
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+    rmStageStats.match = { tokensUsed: 0, failed: true };
+    return false;
+  } finally {
+    endRun();
+  }
+}
+
+/* v3.3.5：只重寫推薦信用的輕量版請求。沿用第一次分析已經產生的 matchScore／
+   scoreReason／matchPoints（不重新評分，避免兩次呼叫給出不一致的分數），
+   只請 AI 針對同一份履歷與職缺，補寫一封自我推薦信。 */
+async function generateCoverLetterOnly(jobDesc, resumeContentText, jobType, toneCue, matchScore, scoreReason, matchPoints){
+  const systemPrompt = `你是專業且誠實的求職顧問，同時深諳企業用人邏輯。你會收到一段職缺說明與一份履歷全文（純文字，可能因 PDF 擷取而有斷行或排版問題，請忽略排版雜訊，專注於內容）。應徵者鎖定的職務類型為「${jobType}」，撰寫時請：${toneCue}
+
+${HONESTY_RULE}
+
+這份履歷與職缺先前已經完成媒合分析，請直接沿用以下結論（不要重新評分、不要修改分數或重點，只需要依據這些結論撰寫推薦信）：
+- 媒合分數：${matchScore}
+- 分數說明：${scoreReason}
+- 匹配重點：${JSON.stringify(Array.isArray(matchPoints) ? matchPoints : [])}
+
+請撰寫一封自我推薦信（繁體中文，約 280-420 字）：語氣專業、有自信、直接，避免謙卑討好或浮誇無依據的保證。內容需包含：
+- 開頭簡短說明應徵動機與對這個職缺/公司的理解
+- 用履歷中具體、真實的經驗或成果，對應職缺最核心的 2-3 項需求
+- 至少 1-2 段從「公司角度」出發，具體說明應徵者加入後能為公司解決什麼問題、帶來什麼價值、如何對業績/成本/獲利/客戶滿意度產生正面影響，須根據履歷真實經驗合理推論，不可空泛喊口號
+- 結尾清楚表達合作意願，語氣自信、不卑不亢
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件，不要任何其他文字、不要 markdown code fence，格式必須完全符合：
+{"coverLetter": "..."}`;
+
+  const userContent = `【職缺說明】\n${jobDesc}\n\n【履歷內容】\n${resumeContentText}`;
+  const result = await callClaude(systemPrompt, userContent, 8000, { label: 'matchLetterRetry' });
+  return typeof result.coverLetter === 'string' ? result.coverLetter : '';
+}
+
+function getMatchTier(score){
+  if (score >= 85) return { label: '高度契合，強烈建議投遞', tone: 'high' };
+  if (score >= 70) return { label: '專業符合度高，可投遞履歷', tone: 'good' };
+  if (score >= 50) return { label: '部分符合，建議先微調履歷再投遞', tone: 'mid' };
+  if (score >= 30) return { label: '專業能力不足，需再加強後投遞', tone: 'low' };
+  return { label: '落差較大，建議先累積相關經驗再投遞', tone: 'verylow' };
+}
+
+function renderMatchResults(parsed){
+  let matchScore = Number(parsed.matchScore);
+  if (!Number.isFinite(matchScore)) matchScore = null;
+  if (matchScore !== null) matchScore = Math.max(0, Math.min(100, Math.round(matchScore)));
+  const scoreReason = typeof parsed.scoreReason === 'string' ? parsed.scoreReason : '';
+  const matchPoints = Array.isArray(parsed.matchPoints) ? parsed.matchPoints : [];
+  const coverLetter = typeof parsed.coverLetter === 'string' ? parsed.coverLetter : '';
+  const letterIsEmpty = coverLetter.trim().length === 0;
+  if (letterIsEmpty){
+    // v3.3.5：走到這裡代表 runMatch 裡「自動重試一次」也還是失敗（或重試時發生錯誤），
+    // 屬於連續兩次都不順利的少見狀況，才需要請使用者自己手動再按一次。
+    addDebugLog({ type: 'warning', label: 'match', message: 'coverLetter 欄位為空字串（已自動重試過一次仍為空），需使用者手動重新產生' });
+  }
+  const panel = document.getElementById('resultsPanel1');
+  panel.classList.remove('empty');
+
+  let scoreBlockHtml = '';
+  if (matchScore !== null){
+    const tier = getMatchTier(matchScore);
+    scoreBlockHtml = `
+      <div class="score-block">
+        <div class="score-number">${matchScore}<sub>/100</sub></div>
+        <div class="score-bar-wrap">
+          <div class="score-bar"><div class="score-bar-fill tier-${tier.tone}" style="width:${matchScore}%"></div></div>
+          <div class="tier-badge tier-${tier.tone}">${escapeHtml(tier.label)}</div>
+          ${scoreReason ? `<div class="score-reason">${escapeHtml(scoreReason)}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  panel.innerHTML = `
+    ${scoreBlockHtml}
+    <div class="results-grid">
+      <div>
+        <h2 class="section-title">匹配重點</h2>
+        <ul class="match-list">${matchPoints.map(p => `<li><span class="dot"></span><span>${escapeHtml(p)}</span></li>`).join('')}</ul>
+      </div>
+      <div class="letter-box">
+        <h2 class="section-title">自我推薦信（可直接編輯）</h2>
+        ${letterIsEmpty ? '' : `<div class="seal" id="seal"><span>已生成<br>推薦信</span></div>`}
+        ${letterIsEmpty ? `<div class="stale-banner show" style="margin:0 0 10px;">⚠️ AI 已自動重試一次仍沒有產生推薦信內容（媒合分數與匹配重點不受影響，仍正常），請點擊上方「產生媒合分析」按鈕再手動產生一次。</div>` : ''}
+        <textarea id="coverLetter">${escapeHtml(coverLetter)}</textarea>
+        <div class="letter-actions">
+          <button class="secondary" id="copyBtn">複製文字</button>
+          <button class="secondary" id="downloadBtn">下載 .txt</button>
+          <button class="secondary" id="toBoardBtn">加入求職看板</button>
+          <span class="char-count" id="letterCount">${coverLetter.length} 字</span>
+        </div>
+      </div>
+    </div>`;
+  const seal = document.getElementById('seal');
+  if (seal) requestAnimationFrame(() => seal.classList.add('show'));
+
+  const letterEl = document.getElementById('coverLetter');
+  const letterCount = document.getElementById('letterCount');
+  letterEl.addEventListener('input', () => { letterCount.textContent = letterEl.value.length + ' 字'; });
+
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    await navigator.clipboard.writeText(letterEl.value);
+    const b = document.getElementById('copyBtn'); const orig = b.textContent;
+    b.textContent = '已複製'; setTimeout(() => b.textContent = orig, 1500);
+  });
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const blob = new Blob([letterEl.value], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = '自我推薦信.txt'; a.click();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('toBoardBtn').addEventListener('click', () => {
+    document.querySelector('.tab-btn[data-tab="t5"]').click();
+    document.getElementById('fCompany').focus();
+    document.getElementById('fJobDesc').value = sharedJobDesc.value.trim();
+    document.getElementById('statusLine5').textContent = '已帶入職缺說明，請補上公司名稱與職稱後加入看板';
+    pendingNote = coverLetter.slice(0, 300);
+  });
+}
+
+/* =========================================================
+   TAB 2 — 履歷健診（ATS 相容度）
+========================================================= */
+document.getElementById('generateBtn2').addEventListener('click', runHealthCheck);
+
+async function runHealthCheck(){
+  const btn = document.getElementById('generateBtn2');
+  const statusLine = document.getElementById('statusLine2');
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在健診履歷⋯';
+
+  const jobDesc = sharedJobDesc.value.trim();
+
+  const systemPrompt = `你是熟悉企業 ATS（應徵者追蹤系統）篩選邏輯與履歷寫作的顧問。你會收到一份職缺說明與一份履歷全文（可能因 PDF 擷取有排版雜訊，請忽略雜訊專注內容）。
+
+${HONESTY_RULE}
+
+請評估這份履歷與該職缺的相容程度，完成：
+1. score：0-100 的整數分數，反映關鍵字/技能覆蓋率與整體符合程度（保守評分，不要為了討好應徵者灌水）。
+2. missingSkills：履歷中缺少、但職缺明確要求的技能/證照/經驗，最多 6 項，每項一句話。
+3. formatRisks：履歷內容或敘述方式中可能造成 ATS 或人資誤讀/漏讀的風險，最多 4 項（例如：經驗描述過於籠統、缺乏量化成果、關鍵字未出現、時間軸不清楚等，請根據實際履歷內容判斷，不要憑空捏造）。
+4. suggestions：3-5 條具體、可執行的修改建議，每條需講清楚「改哪裡、怎麼改」，不要空泛評語。
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件，不要任何其他文字、不要 markdown code fence，格式必須完全符合：
+{"score": 0, "missingSkills": ["..."], "formatRisks": ["..."], "suggestions": ["..."]}`;
+
+  const userContent = `【職缺說明】\n${jobDesc}\n\n【履歷內容】\n${resumeText}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 45000, { label: 'healthcheck' });
+    renderHealthCheck(parsed);
+    statusLine.textContent = '完成';
+    jobDescSnapshot[2] = currentInputKey();
+    setTabDot(2, 'done');
+    refreshStaleIndicators();
+    lastResult2 = parsed;
+    rmStageStats.healthcheck = parsed.__meta || null;
+    saveDraft();
+    return true;
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+    rmStageStats.healthcheck = { tokensUsed: 0, failed: true };
+    return false;
+  } finally {
+    endRun();
+  }
+}
+
+function renderHealthCheck(parsed){
+  let score = Number(parsed.score);
+  if (!Number.isFinite(score)) score = 0;
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  const missingSkills = Array.isArray(parsed.missingSkills) ? parsed.missingSkills : [];
+  const formatRisks = Array.isArray(parsed.formatRisks) ? parsed.formatRisks : [];
+  const suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions : [];
+
+  const panel = document.getElementById('resultsPanel2');
+  panel.classList.remove('empty');
+  panel.innerHTML = `
+    <div class="score-block">
+      <div class="score-number">${score}<sub>/100</sub></div>
+      <div class="score-bar-wrap">
+        <div class="score-bar"><div class="score-bar-fill" style="width:${score}%"></div></div>
+        <div class="score-label">相容度分數 · 依關鍵字覆蓋率與整體符合程度保守評估</div>
+      </div>
+    </div>
+    <div class="check-cols">
+      <div><h2 class="section-title">缺少的技能/經驗</h2>
+        <ul class="check-list">${missingSkills.length ? missingSkills.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>沒有偵測到明顯缺口</li>'}</ul></div>
+      <div><h2 class="section-title">格式/敘述風險</h2>
+        <ul class="check-list">${formatRisks.length ? formatRisks.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>沒有偵測到明顯風險</li>'}</ul></div>
+      <div><h2 class="section-title">修改建議</h2>
+        <ul class="check-list">${suggestions.length ? suggestions.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>暫無額外建議</li>'}</ul></div>
+    </div>`;
+}
+
+/* =========================================================
+   TAB 4 — 模擬面試
+========================================================= */
+document.getElementById('generateBtn4').addEventListener('click', runInterviewSetup);
+
+async function runInterviewSetup(){
+  const btn = document.getElementById('generateBtn4');
+  const statusLine = document.getElementById('statusLine4');
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在準備面試題目⋯';
+
+  const interviewJobDesc = sharedJobDesc.value.trim();
+
+  const systemPrompt = `你是資深面試官與求職教練。你會收到一份職缺說明與一份履歷全文。
+
+${HONESTY_RULE}
+
+請找出履歷中「與職缺相關但描述較模糊、缺乏具體成果或證據較弱」的 4 到 5 個地方，針對每個地方出一道面試題，目的是讓應徵者練習把經驗講得更具體、更有說服力。
+
+除了題目本身，請你直接示範一個「AI 建議回答」：只能使用履歷中「實際出現過」的經歷、專案與數字，不可以捏造履歷裡沒有的公司、職稱、專案或成果；用求職者的第一人稱、口語化、適合在面試現場直接講出來的方式作答，盡量套用「情境（S）－任務（T）－行動（A）－成果（R）」的結構，長度約 120～200 字。如果履歷中確實找不到足夠具體的證據，建議回答就誠實承認經驗有限，並說明求職者可以怎麼補強或轉個角度回答，不要硬編。
+
+輸出一個 JSON 物件：
+{"questions": [{"question": "面試題目本身，用真人面試官會問的語氣", "targetGap": "這題想考驗/補強履歷中的哪個弱點，一句話說明", "suggestedAnswer": "AI 示範的建議回答，第一人稱、口語化、約120-200字"}]}
+
+${JSON_SAFETY_RULE}
+
+只能輸出這個 JSON 物件，不要任何其他文字、不要 markdown code fence。`;
+
+  const userContent = `【職缺說明】\n${interviewJobDesc}\n\n【履歷內容】\n${resumeText}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 18000, { label: 'interviewSetup' });
+    const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+    if (!questions.length) throw new Error('沒有產生面試題目');
+    renderInterviewQuestions(questions);
+    statusLine.textContent = '完成，開始作答練習';
+    jobDescSnapshot[4] = currentInputKey();
+    setTabDot(4, 'done');
+    refreshStaleIndicators();
+    lastResult4 = parsed;
+    rmStageStats.interviewSetup = parsed.__meta || null;
+    saveDraft();
+    return true;
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+    rmStageStats.interviewSetup = { tokensUsed: 0, failed: true };
+    return false;
+  } finally {
+    endRun();
+  }
+}
+
+function renderInterviewQuestions(questions){
+  const panel = document.getElementById('resultsPanel4');
+  panel.classList.remove('empty');
+  panel.innerHTML = `<h2 class="section-title">模擬面試題目</h2>` +
+    questions.map((q, idx) => `
+      <div class="q-card" data-qidx="${idx}">
+        <div class="q-title">Q${idx+1}. ${escapeHtml(q.question)}</div>
+        <div class="q-gap">考驗重點：${escapeHtml(q.targetGap || '')}</div>
+
+        <div class="suggested-answer-box">
+          <div class="suggested-answer-header">
+            <span class="suggested-answer-label">💡 AI 建議回答（依你的履歷內容生成，可直接參考或修改後練習口說）</span>
+            <button class="ghost regenSuggestedBtn" type="button">🔄 換一個回答</button>
+          </div>
+          <div class="suggested-answer-text">${escapeHtml(q.suggestedAnswer || '（尚未產生，請按上方按鈕重新產生）')}</div>
+        </div>
+
+        <details class="own-answer-block">
+          <summary>✍️ 自己打字練習作答（選填，練完可請 AI 給回饋）</summary>
+          <div class="own-answer-body">
+            <textarea placeholder="可以先照著上面的 AI 建議回答練習口說，再換成自己的說法打字看看⋯" class="answerInput"></textarea>
+            <button class="secondary feedbackBtn" type="button">取得回饋</button>
+            <div class="feedback-box"></div>
+          </div>
+        </details>
+      </div>
+    `).join('');
+
+  panel.querySelectorAll('.q-card').forEach(card => {
+    const idx = card.dataset.qidx;
+    const q = questions[idx];
+    card.querySelector('.feedbackBtn').addEventListener('click', () => getInterviewFeedback(card, q));
+    card.querySelector('.regenSuggestedBtn').addEventListener('click', () => regenerateSuggestedAnswer(card, q));
+  });
+}
+
+async function regenerateSuggestedAnswer(card, q){
+  const btn = card.querySelector('.regenSuggestedBtn');
+  const textBox = card.querySelector('.suggested-answer-text');
+  btn.disabled = true;
+  const prevText = textBox.textContent;
+  textBox.innerHTML = '<span class="spinner"></span>AI 正在重新示範回答⋯';
+
+  const systemPrompt = `你是資深面試官與求職教練。你會收到一道面試題、這題想考驗的重點、以及應徵者的履歷全文。
+
+${HONESTY_RULE}
+
+請示範一個「AI 建議回答」：只能使用履歷中「實際出現過」的經歷、專案與數字，不可以捏造履歷裡沒有的公司、職稱、專案或成果；用求職者的第一人稱、口語化、適合在面試現場直接講出來的方式作答，盡量套用「情境（S）－任務（T）－行動（A）－成果（R）」的結構，長度約 120～200 字。請提供一個和先前不同角度或不同切入點的版本。如果履歷中確實找不到足夠具體的證據，就誠實承認經驗有限並說明可以怎麼補強，不要硬編。
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件：{"suggestedAnswer": "..."}，不要任何其他文字、不要 markdown code fence。`;
+
+  const userContent = `【面試題目】${q.question}\n【考驗重點】${q.targetGap || ''}\n【履歷內容】\n${resumeText}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 8000, { label: 'interviewSuggestedAnswer' });
+    const newAnswer = typeof parsed.suggestedAnswer === 'string' ? parsed.suggestedAnswer : '';
+    if (!newAnswer) throw new Error('沒有取得新的建議回答');
+    q.suggestedAnswer = newAnswer;
+    textBox.textContent = newAnswer;
+  } catch (err){
+    console.error(err);
+    textBox.textContent = prevText;
+    alert('重新產生建議回答失敗：' + err.message + '，請再試一次');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function getInterviewFeedback(card, q){
+  const btn = card.querySelector('.feedbackBtn');
+  const box = card.querySelector('.feedback-box');
+  const answer = card.querySelector('.answerInput').value.trim();
+  if (!answer){
+    box.textContent = '請先輸入你的回答，再取得回饋。';
+    box.classList.add('show');
+    return;
+  }
+  btn.disabled = true;
+  box.classList.add('show');
+  box.innerHTML = '<span class="spinner"></span>面試官正在給回饋⋯';
+
+  const systemPrompt = `你是資深面試官。你會收到一道面試題、這題想考驗的重點、以及應徵者的回答。
+
+請用面試官的角度給出簡短、具體、有建設性的回饋（繁體中文，約 80-150 字），指出：回答是否具體（有沒有實際情境與數字/成果）、邏輯是否清楚、還可以怎麼補強。語氣直接但不刻薄，像是真的想幫應徵者準備好上場，不是隨口稱讚。
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件：{"feedback": "..."}，不要任何其他文字、不要 markdown code fence。`;
+
+  const userContent = `【面試題目】${q.question}\n【考驗重點】${q.targetGap || ''}\n【應徵者回答】${answer}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 8000, { label: 'interviewFeedback' });
+    box.textContent = typeof parsed.feedback === 'string' ? parsed.feedback : '沒有取得回饋內容';
+  } catch (err){
+    console.error(err);
+    box.textContent = '取得回饋失敗：' + err.message + '，請再試一次';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ---------- 反問面試官 & 隱性風險評估 ---------- */
+const marketStatsInput = document.getElementById('marketStatsInput');
+const jobDescSnapshotReverse = { value: null };
+marketStatsInput.addEventListener('input', scheduleDraftSave);
+
+function updateReverseButtonState(){
+  const ready = resumeText.trim().length > 10 && sharedJobDesc.value.trim().length > 10;
+  document.getElementById('generateReverseBtn').disabled = !ready;
+}
+
+document.getElementById('generateReverseBtn').addEventListener('click', runReverseInterview);
+
+async function runReverseInterview(){
+  const btn = document.getElementById('generateReverseBtn');
+  const statusLine = document.getElementById('reverseStatusLine');
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在準備反問清單與風險評估⋯';
+
+  const jobDesc = sharedJobDesc.value.trim();
+  const marketStats = marketStatsInput.value.trim();
+
+  const systemPrompt = `你是資深獵頭顧問與面試教練，非常了解台灣就業市場（包括 104、1111 等人力銀行職缺說明常見的公版話術與其背後可能代表的意思）。你會收到：(1) 履歷全文 (2) 職缺說明 (3) 使用者選填、可能為空的公開統計資訊（例如從 104/1111 職缺頁面看到的薪資範圍、應徵人數、公司規模等，使用者手動貼上，不保證完整或最新）。
+
+${HONESTY_RULE}
+
+請完成三件事：
+
+1. reverseQuestions：10 個候選人應該在面試中主動反問面試官的重要問題。這些問題要根據這個職缺說明的具體內容量身設計（不要用「公司文化如何」這種泛用模板題），目的是幫助候選人判斷自己是否真的能勝任、以及這份工作有沒有被職缺說明隱藏起來的問題（例如實際工作範圍、團隊穩定度、成功指標、資源支援、加班狀況、這個職缺為什麼現在在招人等）。每題附上一句話 purpose，說明這題想確認或揭露什麼。
+
+2. hiddenRisks：根據職缺說明的措辭、（若有提供）公開統計資訊，列出 2-5 個「值得留意的潛在隱性風險」。這些是根據文字線索做的推測，不是確定的事實，必須使用「可能」「建議進一步確認」等語氣。如果職缺說明看起來沒有明顯疑慮，就誠實說「目前資訊沒有看到明顯的隱性風險」，不要為了湊數硬找問題。
+
+3. competencyAssessment：根據履歷與職缺的落差，給一段誠實、簡短（2-3 句話）的初步勝任度判斷，說明目前看起來勝任的部分、以及還需要在面試中進一步確認的部分。必須明確表達這只是根據書面資料的初步判斷、不是最終結論，實際情況要以面試中蒐集到的資訊為準。
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件，不要任何其他文字、不要 markdown code fence，格式必須完全符合：
+{"reverseQuestions": [{"question": "...", "purpose": "..."}], "hiddenRisks": ["..."], "competencyAssessment": "..."}`;
+
+  const userContent = `【職缺說明】\n${jobDesc}\n\n【履歷內容】\n${resumeText}\n\n【使用者提供的公開統計資訊（可能為空）】\n${marketStats || '（未提供）'}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 26000, { label: 'reverseInterview' });
+    renderReverseInterview(parsed);
+    statusLine.textContent = '完成';
+    jobDescSnapshotReverse.value = currentInputKey();
+    const banner = document.getElementById('staleBannerReverse');
+    if (banner) banner.classList.remove('show');
+    lastResultReverse.value = parsed;
+    saveDraft();
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+  } finally {
+    endRun();
+  }
+}
+
+function renderReverseInterview(parsed){
+  const questions = Array.isArray(parsed.reverseQuestions) ? parsed.reverseQuestions : [];
+  const hiddenRisks = Array.isArray(parsed.hiddenRisks) ? parsed.hiddenRisks : [];
+  const competencyAssessment = typeof parsed.competencyAssessment === 'string' ? parsed.competencyAssessment : '';
+
+  const panel = document.getElementById('reverseResultsPanel');
+  panel.classList.remove('empty');
+  panel.innerHTML = `
+    <h2 class="section-title">你可以反問面試官的問題</h2>
+    ${questions.map((q, idx) => `
+      <div class="reverse-q-card">
+        <div><span class="reverse-q-num">Q${idx+1}.</span>${escapeHtml(q.question)}</div>
+        <div class="reverse-q-purpose">為什麼問這題：${escapeHtml(q.purpose || '')}</div>
+      </div>
+    `).join('')}
+    <h2 class="section-title" style="margin-top:22px;">潛在隱性風險</h2>
+    <ul class="risk-list">${hiddenRisks.length ? hiddenRisks.map(r=>`<li>${escapeHtml(r)}</li>`).join('') : '<li>目前資訊沒有看到明顯的隱性風險</li>'}</ul>
+    <h2 class="section-title" style="margin-top:22px;">初步勝任度判斷</h2>
+    <div class="competency-box">${escapeHtml(competencyAssessment)}</div>
+  `;
+}
+
+/* =========================================================
+   TAB 5 — 求職看板（使用 window.storage 個人化儲存）
+========================================================= */
+const STATUS_LIST = ['待投遞','已投遞','已回覆','面試中','已offer','已婉拒'];
+let pendingNote = '';
+let boardCache = [];
+let boardLoaded = false;
+
+async function loadBoardFromStorage(){
+  try {
+    const result = await window.storage.get('applications', false);
+    boardCache = result && result.value ? JSON.parse(result.value) : [];
+  } catch (e){
+    boardCache = [];
+  }
+  boardLoaded = true;
+}
+
+async function saveBoardToStorage(){
+  try {
+    const result = await window.storage.set('applications', JSON.stringify(boardCache), false);
+    if (!result) throw new Error('儲存失敗');
+    return true;
+  } catch (e){
+    console.error(e);
+    document.getElementById('statusLine5').textContent = '儲存失敗，請稍後再試一次';
+    return false;
+  }
+}
+
+async function renderBoard(){
+  if (!boardLoaded) await loadBoardFromStorage();
+  const cols = document.getElementById('boardCols');
+  cols.innerHTML = STATUS_LIST.map(status => {
+    const items = boardCache.filter(a => a.status === status);
+    return `
+      <div class="board-col" data-status="${escapeHtml(status)}">
+        <div class="board-col-title">${escapeHtml(status)} (${items.length})</div>
+        <div class="col-items"></div>
+      </div>`;
+  }).join('');
+
+  STATUS_LIST.forEach(status => {
+    const colItems = cols.querySelector(`.board-col[data-status="${cssEscape(status)}"] .col-items`);
+    const items = boardCache.filter(a => a.status === status);
+    items.forEach(entry => {
+      const card = document.createElement('div');
+      card.className = 'app-card';
+      const days = entry.date ? Math.floor((Date.now() - new Date(entry.date).getTime()) / 86400000) : null;
+      const showFlag = entry.status === '已投遞' && days !== null && days >= 10;
+      card.innerHTML = `
+        <button class="del small-x" title="刪除">✕</button>
+        <div class="company">${escapeHtml(entry.company || '未命名公司')}</div>
+        <div class="role">${escapeHtml(entry.role || '')}</div>
+        <div class="meta">${entry.date ? escapeHtml(entry.date) : '未填日期'}${days !== null ? ' · 第 ' + days + ' 天' : ''}</div>
+        ${showFlag ? '<div class="flag">已投遞超過 10 天，建議追蹤進度</div>' : ''}
+        <select>${STATUS_LIST.map(s => `<option value="${escapeHtml(s)}" ${s===entry.status?'selected':''}>${escapeHtml(s)}</option>`).join('')}</select>
+      `;
+      card.querySelector('select').addEventListener('change', async (e) => {
+        entry.status = e.target.value;
+        await saveBoardToStorage();
+        renderBoard();
+      });
+      card.querySelector('.del').addEventListener('click', async () => {
+        boardCache = boardCache.filter(a => a.id !== entry.id);
+        await saveBoardToStorage();
+        renderBoard();
+      });
+      colItems.appendChild(card);
+    });
+  });
+
+  updateRejectionAnalysisButtonState();
+}
+
+function cssEscape(str){ return String(str).replace(/"/g,'\\"'); }
+
+document.getElementById('addEntryBtn').addEventListener('click', async () => {
+  const company = document.getElementById('fCompany').value.trim();
+  const role = document.getElementById('fRole').value.trim();
+  const date = document.getElementById('fDate').value;
+  const status = document.getElementById('fStatus').value;
+  const jobDesc = document.getElementById('fJobDesc').value.trim();
+  const statusLine = document.getElementById('statusLine5');
+
+  if (!company){
+    statusLine.textContent = '請至少填寫公司名稱';
+    return;
+  }
+  if (!boardLoaded) await loadBoardFromStorage();
+
+  boardCache.push({
+    id: 'app_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    company, role, date, status,
+    note: pendingNote || '',
+    jobDesc: jobDesc || ''
+  });
+  pendingNote = '';
+  const ok = await saveBoardToStorage();
+  statusLine.textContent = ok ? '已加入看板' : statusLine.textContent;
+  document.getElementById('fCompany').value = '';
+  document.getElementById('fRole').value = '';
+  document.getElementById('fDate').value = '';
+  document.getElementById('fStatus').value = '待投遞';
+  document.getElementById('fJobDesc').value = '';
+  renderBoard();
+});
+
+/* ---------- 拒絕原因回推分析 ---------- */
+function getQualifyingEntries(){
+  return boardCache.filter(e => {
+    if (!e.jobDesc || e.jobDesc.trim().length < 10) return false;
+    if (e.status === '已婉拒') return true;
+    if (e.status === '已投遞' && e.date){
+      const days = Math.floor((Date.now() - new Date(e.date).getTime()) / 86400000);
+      return days >= 10;
+    }
+    return false;
+  });
+}
+
+function updateRejectionAnalysisButtonState(){
+  const btn = document.getElementById('analyzeRejectionBtn');
+  const statusLine = document.getElementById('rejectionStatusLine');
+  if (!btn) return;
+  const qualifying = getQualifyingEntries();
+  btn.disabled = qualifying.length < 2;
+  if (qualifying.length < 2){
+    statusLine.classList.remove('err');
+    statusLine.textContent = `目前有 ${qualifying.length} 筆可分析的資料，至少需要 2 筆「已婉拒」或「已投遞超過 10 天」、且有填寫職缺說明的紀錄`;
+  } else if (!statusLine.textContent.includes('完成') && !statusLine.textContent.includes('正在')){
+    statusLine.textContent = `目前有 ${qualifying.length} 筆資料可用於分析`;
+  }
+}
+
+document.getElementById('analyzeRejectionBtn').addEventListener('click', runRejectionAnalysis);
+
+async function runRejectionAnalysis(){
+  const btn = document.getElementById('analyzeRejectionBtn');
+  const statusLine = document.getElementById('rejectionStatusLine');
+  const qualifying = getQualifyingEntries();
+  if (qualifying.length < 2){
+    statusLine.textContent = '資料還不夠，請先累積至少 2 筆符合條件的紀錄';
+    statusLine.classList.add('err');
+    return;
+  }
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在比對這些職缺與履歷的落差⋯';
+
+  const systemPrompt = `你是資深求職顧問。你會收到一份履歷全文，以及使用者投遞後「已婉拒」或「已投遞超過 10 天沒有回應」的多筆職缺說明。
+
+【重要限制】你並不知道公司真正的拒絕理由，這些企業從未告訴使用者為什麼沒有錄取。你只能根據「履歷內容」與「這些職缺說明」之間的落差，推測可能重複出現的原因。這是統計上的推測，不是確定的事實，用詞必須保持推測語氣（可能、值得留意、看起來、建議進一步確認），絕對不可以講得像是已經證實的結論，也不可以讓使用者覺得完全沒有希望。
+
+${HONESTY_RULE}
+
+請完成：
+1. patternSummary：用 2-4 句話，誠實地總結這些職缺與履歷之間「重複出現」的落差模式（如果每筆職缺的落差都不一樣、看不出重複模式，就誠實說看不出明顯的共同模式，不要硬湊一個）。
+2. commonGaps：3-6 項具體的重複落差，每項一句話，需要能同時對應到至少兩筆職缺，不可以只是單一職缺才有的問題。
+3. recommendations：3-5 條具體、可執行的建議，說明履歷可以怎麼調整、或投遞策略可以怎麼改變，才能提高下一輪的機會。
+
+${JSON_SAFETY_RULE}
+
+只能輸出一個 JSON 物件，不要任何其他文字、不要 markdown code fence，格式必須完全符合：
+{"patternSummary": "...", "commonGaps": ["..."], "recommendations": ["..."]}`;
+
+  const userContent = `【履歷內容】\n${resumeText}\n\n【投遞後未成功的職缺清單】\n` +
+    qualifying.map((e, i) => `職缺 ${i+1}（${e.company || '未命名公司'} - ${e.role || '未填職稱'}，狀態：${e.status}）：\n${e.jobDesc}`).join('\n\n');
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 18000, { label: 'rejectionAnalysis' });
+    renderRejectionAnalysis(parsed, qualifying.length);
+    statusLine.textContent = '完成';
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+  } finally {
+    endRun();
+  }
+}
+
+function renderRejectionAnalysis(parsed, sampleCount){
+  const patternSummary = typeof parsed.patternSummary === 'string' ? parsed.patternSummary : '';
+  const commonGaps = Array.isArray(parsed.commonGaps) ? parsed.commonGaps : [];
+  const recommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
+
+  const panel = document.getElementById('rejectionResultsPanel');
+  panel.classList.remove('empty');
+  panel.innerHTML = `
+    <p class="tool-note" style="margin-bottom:14px;">根據 ${sampleCount} 筆未成功的投遞紀錄推測（非公司提供的真實理由）：</p>
+    <div class="competency-box" style="margin-top:0;margin-bottom:18px;">${escapeHtml(patternSummary)}</div>
+    <div class="check-cols" style="grid-template-columns:1fr 1fr;">
+      <div><h2 class="section-title">重複出現的落差</h2>
+        <ul class="check-list">${commonGaps.length ? commonGaps.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>沒有看出明顯的重複模式</li>'}</ul></div>
+      <div><h2 class="section-title">建議下一步</h2>
+        <ul class="check-list">${recommendations.length ? recommendations.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>暫無額外建議</li>'}</ul></div>
+    </div>`;
+}
+
+/* =========================================================
+   TAB 6 — 客製履歷（依此職缺重新編排一份新履歷，可下載 PDF）
+   v3.2.15 新增。刻意「不」包含在「一鍵產生全部分析」中：完整重新編排
+   一份履歷所需的輸出長度，遠比健診/媒合分析的簡短 JSON 多很多，若也
+   塞進一鍵批次，會拉長整體等待時間、也更容易撞到 tokens 上限，因此
+   維持「需單獨生成」。
+   PDF 產生方式：由於是純瀏覽器端工具、且必須完整支援中文字型，這裡
+   採用瀏覽器原生的「列印 → 另存為 PDF」機制，而不是使用需要額外嵌入
+   中文字型檔（動輒數 MB）的 PDF 產生函式庫，確保中文顯示不會缺字。
+========================================================= */
+document.getElementById('generateBtn6').addEventListener('click', runTailoredResume);
+
+async function runTailoredResume(){
+  const btn = document.getElementById('generateBtn6');
+  const statusLine = document.getElementById('statusLine6');
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在依此職缺重新編排履歷⋯（內容較長，可能需要一點時間）';
+
+  const jobDesc = sharedJobDesc.value.trim();
+
+  const systemPrompt = `你現在是一位擁有十年經驗的頂尖跨國企業（如 Google、Apple、McKinsey）人資主管與履歷撰寫專家。請針對「使用者提供的原始履歷」與「這份職缺說明」，重新撰寫一份符合世界級企業標準（強調 STAR 原則、量化數據導向、凸顯商業價值）的專業履歷初稿。
+
+【絕對禁止（最優先，任何情況都不可違反）】
+- 禁止捏造原始履歷中不存在的公司、職稱、經歷、專案、數字或成果。
+- 若職缺要求的某項經驗，原始履歷完全沒有對應內容，只能誠實地不特別強調，絕不可以無中生有創造案例或數字來湊。
+- 聯絡資訊（姓名、電話、Email、地區等）必須完全比照原始履歷內容，不可修改、簡化或捏造；若原始履歷沒有提供某項聯絡資訊，該欄位留空字串即可。
+
+【撰寫要求】
+1. 高度對齊：分析職缺說明中的關鍵字與核心需求，將原始經歷重新包裝、排序，與職缺需求強烈對應，以利通過 ATS 篩選。
+2. 強勢動詞＋量化敘述：每一條工作經歷的列點請用強而有力的動詞開頭（例如：帶領、優化、創下、建置、驅動、重塑），將模糊的描述轉化為具體成就。
+   - 若原始履歷「已經存在」具體數字或事實，直接沿用、表達得更清楚，不可竄改成不同的數字。
+   - 若某項成就原始履歷完全沒有提供數字，但職缺明顯重視該項成果，可以在該條列點文字後方加註「[請補充數據：例如提升了X%或節省X小時]」這樣的提示語句，引導使用者事後自行填入真實數字；絕對不可以自己編造一個看似合理的數字放進去頂替。
+3. 專業架構：依序輸出個人摘要（Professional Summary）、核心技能（Core Competencies）、工作經歷（Professional Experience，含公司、職稱、期間與量化重點列點）、學歷（Education）。
+4. 精簡有力：優先保留與此職缺最相關、最具衝擊力的戰功；與職缺無關的瑣碎日常行政事項可以精簡或省略，讓整體篇幅盡量貼近「一頁式履歷（One-page resume）」的資訊密度。
+
+請只回傳一個 JSON 物件（不要有任何其他文字、不要用 markdown code fence），格式如下：
+{"name":"姓名（比照原始履歷）","targetTitle":"這份履歷要應徵的職稱（對應此職缺）","contactLine":"電話｜Email｜地區（比照原始履歷，用｜分隔，缺項留空）","summary":"2~4句自我介紹，針對此職缺客製化","coreSkills":["關鍵技能1","關鍵技能2","..."],"experience":[{"company":"公司名稱","title":"職稱","period":"任職期間","bullets":["重點描述1","重點描述2","..."]}],"education":[{"school":"學校","department":"科系/學位","period":"就讀期間"}],"certifications":["證照或語言能力，若無則為空陣列"],"changeNotes":["說明這次針對此職缺做了哪些調整、為什麼這樣調整，3~6點，給使用者自己核對用，不會出現在履歷上"]}`;
+
+  const userContent = `【職缺說明】\n${jobDesc}\n\n【原始履歷內容】\n${resumeText}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 16000, { label: 'tailoredResume' });
+    renderTailoredResume(parsed);
+    statusLine.textContent = '完成，可預覽並下載 PDF';
+    jobDescSnapshot[6] = currentInputKey();
+    setTabDot(6, 'done');
+    refreshStaleIndicators();
+    lastResult6 = parsed;
+    saveDraft();
+    return true;
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+    return false;
+  } finally {
+    endRun();
+  }
+}
+
+/* 依版型 layout（standard／sidebar／darkband）組出履歷內文 DOM，內容資料完全相同，
+   只是排版結構不同：sidebar 版把聯絡資訊/技能/證照放進側邊欄，darkband 版把姓名/職稱/
+   聯絡資訊包進頂部深色色塊，其餘兩者則是單欄由上到下依序排列。 */
+function buildResumeBodyHtml(data, layout){
+  const { name, targetTitle, contactLine, summary, coreSkills, experience, education, certifications } = data;
+
+  const expHtml = experience.map(job => {
+    const bullets = Array.isArray(job.bullets) ? job.bullets : [];
+    return `
+      <div class="re-job">
+        <div class="re-job-head"><span>${escapeHtml(job.title || '')}｜${escapeHtml(job.company || '')}</span><span class="re-job-period">${escapeHtml(job.period || '')}</span></div>
+        <ul>${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      </div>`;
+  }).join('');
+
+  const eduHtml = education.map(ed => `
+      <div class="re-job">
+        <div class="re-job-head"><span>${escapeHtml(ed.school || '')}</span><span class="re-job-period">${escapeHtml(ed.period || '')}</span></div>
+        <div style="font-size:12.5px;color:var(--re-muted);">${escapeHtml(ed.department || '')}</div>
+      </div>`).join('');
+
+  const summaryHtml = summary ? `<div class="re-section-title">自我介紹</div><div class="re-summary">${escapeHtml(summary)}</div>` : '';
+  const skillsHtml = coreSkills.length ? `<div class="re-section-title">核心技能</div><div class="re-skills">${coreSkills.map(s => `<span class="re-skill-chip">${escapeHtml(s)}</span>`).join('')}</div>` : '';
+  const certHtml = certifications.length ? `<div class="re-section-title">證照／語言能力</div><div class="re-skills">${certifications.map(s => `<span class="re-skill-chip">${escapeHtml(s)}</span>`).join('')}</div>` : '';
+  const footerHtml = `<div class="re-footer-note">本履歷由 AI 依據原始履歷內容重新編排，正式送出前請自行核實所有內容是否正確。</div>`;
+  const headerInner = `
+      <h1>${escapeHtml(name)}</h1>
+      ${targetTitle ? `<div class="re-target-title">應徵職稱：${escapeHtml(targetTitle)}</div>` : ''}
+      ${contactLine ? `<div class="re-contact">${escapeHtml(contactLine)}</div>` : ''}`;
+
+  if (layout === 'sidebar'){
+    return `
+      <div class="re-sidebar">
+        ${headerInner}
+        ${skillsHtml}
+        ${certHtml}
+      </div>
+      <div class="re-main">
+        ${summaryHtml}
+        ${expHtml ? `<div class="re-section-title">工作經驗</div>${expHtml}` : ''}
+        ${eduHtml ? `<div class="re-section-title">學歷</div>${eduHtml}` : ''}
+        ${footerHtml}
+      </div>`;
+  }
+  if (layout === 'darkband'){
+    return `
+      <div class="re-header-band">${headerInner}</div>
+      ${summaryHtml}
+      ${skillsHtml}
+      ${expHtml ? `<div class="re-section-title">工作經驗</div>${expHtml}` : ''}
+      ${eduHtml ? `<div class="re-section-title">學歷</div>${eduHtml}` : ''}
+      ${certHtml}
+      ${footerHtml}`;
+  }
+  return `
+      ${headerInner}
+      ${summaryHtml}
+      ${skillsHtml}
+      ${expHtml ? `<div class="re-section-title">工作經驗</div>${expHtml}` : ''}
+      ${eduHtml ? `<div class="re-section-title">學歷</div>${eduHtml}` : ''}
+      ${certHtml}
+      ${footerHtml}`;
+}
+
+/* v3.3.6：把客製履歷資料組成 Word 版本可用的 HTML（純語意化標籤＋
+   內嵌樣式，不使用畫面上的 CSS 變數版型，確保在 Word 開啟時排版正常、
+   且求職者可以直接用 Word 的段落／清單工具繼續編輯）。 */
+function buildResumeWordHtml(data){
+  const { name, targetTitle, contactLine, summary, coreSkills, experience, education, certifications } = data;
+
+  const expHtml = experience.map(job => `
+    <table><tr>
+      <td><b>${escapeHtml(job.title || '')}｜${escapeHtml(job.company || '')}</b></td>
+      <td align="right" class="doc-muted">${escapeHtml(job.period || '')}</td>
+    </tr></table>
+    <ul>${(Array.isArray(job.bullets) ? job.bullets : []).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+  `).join('');
+
+  const eduHtml = education.map(ed => `
+    <table><tr>
+      <td><b>${escapeHtml(ed.school || '')}</b></td>
+      <td align="right" class="doc-muted">${escapeHtml(ed.period || '')}</td>
+    </tr></table>
+    <p class="doc-muted">${escapeHtml(ed.department || '')}</p>
+  `).join('');
+
+  const skillsHtml = coreSkills.length ? coreSkills.map(s => `<span class="doc-tag">${escapeHtml(s)}</span>`).join('') : '';
+  const certHtml = certifications.length ? certifications.map(s => `<span class="doc-tag">${escapeHtml(s)}</span>`).join('') : '';
+
+  return `
+    <h1>${escapeHtml(name)}</h1>
+    ${targetTitle ? `<p class="doc-meta">應徵職稱：${escapeHtml(targetTitle)}</p>` : ''}
+    ${contactLine ? `<p class="doc-meta">${escapeHtml(contactLine)}</p>` : ''}
+    ${summary ? `<h2>自我介紹</h2><p>${escapeHtml(summary)}</p>` : ''}
+    ${skillsHtml ? `<h2>核心技能</h2><p>${skillsHtml}</p>` : ''}
+    ${expHtml ? `<h2>工作經驗</h2>${expHtml}` : ''}
+    ${eduHtml ? `<h2>學歷</h2>${eduHtml}` : ''}
+    ${certHtml ? `<h2>證照／語言能力</h2><p>${certHtml}</p>` : ''}
+    <div class="doc-footer">本履歷由 AI 依據原始履歷內容重新編排，正式送出前請自行核實所有內容是否正確；您可直接在 Word 中修改文字、字型與排版。</div>
+  `;
+}
+
+function downloadResumeWord(){
+  if (!lastResult6) return;
+  const name = typeof lastResult6.name === 'string' ? lastResult6.name : (resumeFileLabel || '');
+  const targetTitle = typeof lastResult6.targetTitle === 'string' ? lastResult6.targetTitle : '';
+  const contactLine = typeof lastResult6.contactLine === 'string' ? lastResult6.contactLine : '';
+  const summary = typeof lastResult6.summary === 'string' ? lastResult6.summary : '';
+  const coreSkills = Array.isArray(lastResult6.coreSkills) ? lastResult6.coreSkills : [];
+  const experience = Array.isArray(lastResult6.experience) ? lastResult6.experience : [];
+  const education = Array.isArray(lastResult6.education) ? lastResult6.education : [];
+  const certifications = Array.isArray(lastResult6.certifications) ? lastResult6.certifications : [];
+  const bodyHtml = buildResumeWordHtml({ name, targetTitle, contactLine, summary, coreSkills, experience, education, certifications });
+  const fileLabel = (name || '客製履歷').replace(/[\\/:*?"<>|]/g, '');
+  downloadWordDocument(`${fileLabel}_客製履歷`, `${name} 客製履歷`, bodyHtml);
+}
+
+function renderTailoredResume(parsed){
+  const name = typeof parsed.name === 'string' ? parsed.name : (resumeFileLabel || '');
+  const targetTitle = typeof parsed.targetTitle === 'string' ? parsed.targetTitle : '';
+  const contactLine = typeof parsed.contactLine === 'string' ? parsed.contactLine : '';
+  const summary = typeof parsed.summary === 'string' ? parsed.summary : '';
+  const coreSkills = Array.isArray(parsed.coreSkills) ? parsed.coreSkills : [];
+  const experience = Array.isArray(parsed.experience) ? parsed.experience : [];
+  const education = Array.isArray(parsed.education) ? parsed.education : [];
+  const certifications = Array.isArray(parsed.certifications) ? parsed.certifications : [];
+  const changeNotes = Array.isArray(parsed.changeNotes) ? parsed.changeNotes : [];
+
+  const panel = document.getElementById('resultsPanel6');
+  panel.classList.remove('empty');
+
+  const theme = RESUME_THEMES.find(t => t.id === selectedResumeTheme) || RESUME_THEMES[0];
+  const bodyHtml = buildResumeBodyHtml({ name, targetTitle, contactLine, summary, coreSkills, experience, education, certifications }, theme.layout);
+
+  panel.innerHTML = `
+    <div class="cta-row" style="margin-top:0;">
+      <button class="secondary" id="downloadResumeBtn" type="button">📄 下載 PDF（開啟列印視窗，選擇「另存為 PDF」）</button>
+      <button class="secondary" id="downloadResumeWordBtn" type="button">📝 下載 Word（.doc，可自行編輯）</button>
+    </div>
+    <div class="deck-theme-switch-wrap">
+      <span class="deck-theme-switch-label">更換版型（即時切換，不需重新產生）</span>
+      <div class="deck-theme-switch" id="resumeThemeSwitch"></div>
+    </div>
+    <div class="resume-export theme-${theme.id} layout-${theme.layout}" id="resumeExportArea">
+      ${bodyHtml}
+    </div>
+    ${changeNotes.length ? `
+    <div class="change-notes-box">
+      <span class="cn-title">這次針對此職缺做了哪些調整（僅供你自己核對，不會出現在履歷上）：</span>
+      <ul class="check-list">${changeNotes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
+    </div>` : ''}
+  `;
+  document.getElementById('downloadResumeBtn').addEventListener('click', () => printExportArea('resume'));
+  document.getElementById('downloadResumeWordBtn').addEventListener('click', () => downloadResumeWord());
+  renderResumeThemePicker('resumeThemeSwitch', 'switch');
+}
+
+/* =========================================================
+   TAB 7 — 提案簡報（8~10 頁，5 款版型可選，可下載 PDF）
+   v3.3.0：改採「面試提案簡報黃金架構」（破題亮點 → 痛點洞察 → 提案與
+   30-60-90 天計畫 → 能力佐證 → 結語 Q&A），並提供 5 款世界級企業簡報
+   版型供使用者挑選（產生後仍可即時切換版型，不需重新呼叫 AI，省 tokens）。
+   同樣「不」包含在「一鍵產生全部分析」中，理由同上。
+========================================================= */
+document.getElementById('generateBtn7').addEventListener('click', runProposalDeck);
+
+async function runProposalDeck(){
+  const btn = document.getElementById('generateBtn7');
+  const statusLine = document.getElementById('statusLine7');
+  btn.disabled = true;
+  statusLine.classList.remove('err');
+  statusLine.innerHTML = '<span class="spinner"></span>AI 正在依黃金架構製作提案簡報⋯（8~10 頁，需要較長時間，請耐心等候）';
+
+  const jobDesc = sharedJobDesc.value.trim();
+  const extraContextEl = document.getElementById('dt7ExtraContext');
+  const extraContext = extraContextEl ? extraContextEl.value.trim() : '';
+
+  const systemPrompt = `你是一位資深人資主管與求職策略顧問，請針對「使用者提供的原始履歷」與「這份職缺說明」，製作一份可在面試現場口頭簡報、或主動投遞時附上的「面試提案簡報」，目的不是把履歷再放大一次，而是提出一份「解決方案」，讓招聘方清楚知道這位求職者完全勝任此職位、並能為公司帶來具體價值。
+
+【絕對禁止】
+- 禁止捏造原始履歷中不存在的經歷、專案、數字或成果；所有內容都必須基於原始履歷實際寫到的事實。
+- 若某項職缺需求原始履歷沒有對應經驗，可以誠實呈現「可轉移的相關能力」，但不可捏造不存在的專案或數字。
+- 「現況分析與痛點洞察」段落中，公司/職位的挑戰、市場現況必須根據職缺說明與（若有提供的）補充背景資訊合理推估，不可捏造具體到不合理的內幕資訊；語氣上是「展現你做過功課、看到對方的方向」，而不是斷言式地假裝掌握對方機密。
+
+【簡報黃金架構】（請嚴格依此順序規劃，總頁數含頭尾必須落在 8~10 頁之間）
+1. 破題與個人亮點（1~2 頁）：一句話定位自己（大標題說明你是誰、能帶來的最大價值），加上 2~3 項與此職缺最相關的量化成就。
+2. 現況分析與痛點洞察（1~2 頁）：點出這間公司或這個職位目前可能面臨的挑戰、市場現況或潛在機會，展現「你懂他們的處境」。
+3. 你的提案與行動計畫（3~4 頁，這是整份簡報的靈魂）：針對上一段的痛點提出對症下藥的解決策略，並具體規劃「入職 30-60-90 天計畫」（第一個月熟悉與盤點、第二個月優化與執行、第三個月擴展與產出成效），降低對方對試用期的疑慮。
+4. 能力佐證／為什麼是我（1 頁）：用過去的成功案例（附數據）證明你剛才提出的行動計畫，是你真的有能力執行的。
+5. 結語與 Q&A（1 頁）：總結價值、表達加入意願、留下聯絡方式，把時間交還給面試官提問。
+
+【排版原則】少即是多：每頁文字盡量精簡，中文字數建議不超過 50 字（不含標題與數字），重點應該由使用者口頭表達，畫面只負責留下關鍵字與數字印象。
+
+【每頁需指定 layout，從以下擇一，欄位需完全符合規格】
+"title"：封面／大標題頁。欄位：heading（一句話定位自己的大標語）、subheading（姓名＋應徵職稱）。
+"highlight"：個人亮點頁。欄位：heading、stats（2~3 個物件陣列，每個含 number 極短的量化數字如"20%"或"5人團隊"、label 一行說明這個數字代表什麼）、note（選填，一行小補充，可留空字串）。
+"painpoint"：現況痛點洞察頁。欄位：heading、bullets（2~4 條，每條一行，指出對方可能面臨的挑戰或機會）。
+"solution"：提案對策頁。欄位：heading、pairs（2~4 個物件陣列，每個含 problem 一行痛點、action 一行對應的解決對策）。
+"plan306090"：入職 30-60-90 天計畫頁（整份簡報只會出現一次）。欄位：heading、phases（固定 3 個物件陣列，依序為 30/60/90 天，每個含 label 例如"Day 1-30・熟悉與盤點"、bullets 2~3 條該階段具體會做的事）。
+"proof"：能力佐證頁。欄位：heading、cases（1~3 個物件陣列，每個含 title 案例名稱、result 一行具體成果數據）。
+"bullets"：一般條列頁（僅在上述專用版面都不適合時使用）。欄位：heading、bullets（3~6 條）。
+"twoColumn"：左右兩欄對比頁。欄位：heading、leftTitle、leftBullets（陣列）、rightTitle、rightBullets（陣列）。
+"quote"：強調金句頁。欄位：heading（可留空字串）、quote（一句話重點）、attribution（可留空字串）。
+"closing"：結尾頁。欄位：heading、subheading（聯絡方式或感謝語）。
+
+請只回傳一個 JSON 物件（不要有任何其他文字、不要用 markdown code fence），格式如下：
+{"deckTitle":"簡報標題","slides":[{"layout":"title","heading":"...","subheading":"..."},{"layout":"highlight","heading":"...","stats":[{"number":"...","label":"..."}],"note":""},{"layout":"painpoint","heading":"...","bullets":["...","..."]},{"layout":"solution","heading":"...","pairs":[{"problem":"...","action":"..."}]},{"layout":"plan306090","heading":"...","phases":[{"label":"Day 1-30・...","bullets":["...","..."]},{"label":"Day 31-60・...","bullets":["...","..."]},{"label":"Day 61-90・...","bullets":["...","..."]}]},{"layout":"proof","heading":"...","cases":[{"title":"...","result":"..."}]},{"layout":"closing","heading":"...","subheading":"..."}]}`;
+
+  const userContent = `【職缺說明】\n${jobDesc}\n\n${extraContext ? '【使用者補充的背景資訊／已知挑戰】\n' + extraContext + '\n\n' : ''}【原始履歷內容】\n${resumeText}`;
+
+  try {
+    const parsed = await callClaude(systemPrompt, userContent, 16000, { label: 'proposalDeck' });
+    const slides = Array.isArray(parsed.slides) ? parsed.slides : [];
+    if (!slides.length) throw new Error('沒有產生任何投影片內容');
+    renderProposalDeck(parsed);
+    statusLine.textContent = '完成（共 ' + slides.length + ' 頁），可預覽、更換版型並下載 PDF';
+    jobDescSnapshot[7] = currentInputKey();
+    setTabDot(7, 'done');
+    refreshStaleIndicators();
+    lastResult7 = parsed;
+    saveDraft();
+    return true;
+  } catch (err){
+    console.error(err);
+    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
+    statusLine.classList.add('err');
+    return false;
+  } finally {
+    endRun();
+  }
+}
+
+function renderSlide(slide, index, total){
+  const layout = slide.layout;
+  const numberHtml = `<span class="slide-number">${index + 1} / ${total}</span>`;
+  if (layout === 'title'){
+    return `<div class="slide-page slide-title-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      ${slide.subheading ? `<div class="slide-subheading">${escapeHtml(slide.subheading)}</div>` : ''}
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'twoColumn'){
+    const leftBullets = Array.isArray(slide.leftBullets) ? slide.leftBullets : [];
+    const rightBullets = Array.isArray(slide.rightBullets) ? slide.rightBullets : [];
+    return `<div class="slide-page slide-bullets-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      <div class="slide-two-col">
+        <div class="col">${slide.leftTitle ? `<div class="col-title">${escapeHtml(slide.leftTitle)}</div>` : ''}<ul>${leftBullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul></div>
+        <div class="col">${slide.rightTitle ? `<div class="col-title">${escapeHtml(slide.rightTitle)}</div>` : ''}<ul>${rightBullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul></div>
+      </div>
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'quote'){
+    return `<div class="slide-page slide-quote-layout">
+      ${slide.heading ? `<div class="slide-heading">${escapeHtml(slide.heading)}</div>` : ''}
+      <div class="slide-quote-text">「${escapeHtml(slide.quote || '')}」</div>
+      ${slide.attribution ? `<div class="slide-quote-attr">${escapeHtml(slide.attribution)}</div>` : ''}
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'closing'){
+    return `<div class="slide-page slide-title-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      ${slide.subheading ? `<div class="slide-subheading">${escapeHtml(slide.subheading)}</div>` : ''}
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'highlight'){
+    const stats = Array.isArray(slide.stats) ? slide.stats : [];
+    return `<div class="slide-page slide-bullets-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      <div class="slide-stat-grid">${stats.map(s => `
+        <div class="slide-stat-card">
+          <div class="slide-stat-num">${escapeHtml(String(s.number || ''))}</div>
+          <div class="slide-stat-label">${escapeHtml(s.label || '')}</div>
+        </div>`).join('')}</div>
+      ${slide.note ? `<div class="slide-highlight-note">${escapeHtml(slide.note)}</div>` : ''}
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'painpoint'){
+    const bullets = Array.isArray(slide.bullets) ? slide.bullets : [];
+    return `<div class="slide-page slide-bullets-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      <ul class="slide-painpoint-list">${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'solution'){
+    const pairs = Array.isArray(slide.pairs) ? slide.pairs : [];
+    return `<div class="slide-page slide-bullets-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      <ul class="slide-solution-list">${pairs.map(p => `
+        <li class="slide-solution-row">
+          <span class="slide-solution-problem">${escapeHtml(p.problem || '')}</span>
+          <span class="slide-solution-arrow">→</span>
+          <span class="slide-solution-action">${escapeHtml(p.action || '')}</span>
+        </li>`).join('')}</ul>
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'plan306090'){
+    const phases = Array.isArray(slide.phases) ? slide.phases : [];
+    return `<div class="slide-page slide-bullets-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      <div class="slide-plan-cols">${phases.map(p => `
+        <div class="slide-plan-col">
+          <div class="slide-plan-col-title">${escapeHtml(p.label || '')}</div>
+          <ul>${(Array.isArray(p.bullets) ? p.bullets : []).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </div>`).join('')}</div>
+      ${numberHtml}
+    </div>`;
+  }
+  if (layout === 'proof'){
+    const cases = Array.isArray(slide.cases) ? slide.cases : [];
+    return `<div class="slide-page slide-bullets-layout">
+      <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+      <div class="slide-proof-list">${cases.map(c => `
+        <div class="slide-proof-item">
+          <div class="slide-proof-title">${escapeHtml(c.title || '')}</div>
+          <div class="slide-proof-result">${escapeHtml(c.result || '')}</div>
+        </div>`).join('')}</div>
+      ${numberHtml}
+    </div>`;
+  }
+  // 預設當作 bullets 版面
+  const bullets = Array.isArray(slide.bullets) ? slide.bullets : [];
+  return `<div class="slide-page slide-bullets-layout">
+    <div class="slide-heading">${escapeHtml(slide.heading || '')}</div>
+    <ul>${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+    ${numberHtml}
+  </div>`;
+}
+
+/* v3.3.6：把單一投影片轉成 Word 文件裡的一個段落區塊（標題＋內容），
+   不同 layout 一律轉成「標題＋條列／表格」的線性文件排法，讓求職者
+   拿到手是一份可以直接用 Word 編輯、列印、或貼進提案信件的文件。 */
+function buildSlideWordHtml(slide, index, total){
+  const layout = slide.layout;
+  const pageBreak = index === 0 ? '' : ' doc-pagebreak';
+  const wrapOpen = `<div class="${pageBreak.trim()}">`;
+  const wrapClose = `</div>`;
+  const pageLabel = `<p class="doc-muted">第 ${index + 1} / ${total} 頁</p>`;
+
+  if (layout === 'title' || layout === 'closing'){
+    return `${wrapOpen}
+      <h1>${escapeHtml(slide.heading || '')}</h1>
+      ${slide.subheading ? `<p class="doc-meta">${escapeHtml(slide.subheading)}</p>` : ''}
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'twoColumn'){
+    const leftBullets = Array.isArray(slide.leftBullets) ? slide.leftBullets : [];
+    const rightBullets = Array.isArray(slide.rightBullets) ? slide.rightBullets : [];
+    return `${wrapOpen}
+      <h2>${escapeHtml(slide.heading || '')}</h2>
+      <table><tr>
+        <td style="width:50%;padding-right:10pt;">
+          ${slide.leftTitle ? `<h3>${escapeHtml(slide.leftTitle)}</h3>` : ''}
+          <ul>${leftBullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </td>
+        <td style="width:50%;padding-left:10pt;">
+          ${slide.rightTitle ? `<h3>${escapeHtml(slide.rightTitle)}</h3>` : ''}
+          <ul>${rightBullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </td>
+      </tr></table>
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'quote'){
+    return `${wrapOpen}
+      ${slide.heading ? `<h2>${escapeHtml(slide.heading)}</h2>` : ''}
+      <p>「${escapeHtml(slide.quote || '')}」</p>
+      ${slide.attribution ? `<p class="doc-muted">${escapeHtml(slide.attribution)}</p>` : ''}
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'highlight'){
+    const stats = Array.isArray(slide.stats) ? slide.stats : [];
+    return `${wrapOpen}
+      <h2>${escapeHtml(slide.heading || '')}</h2>
+      <table><tr>${stats.map(s => `<td style="text-align:center;padding:4pt;"><b style="font-size:16pt;">${escapeHtml(String(s.number || ''))}</b><br><span class="doc-muted">${escapeHtml(s.label || '')}</span></td>`).join('')}</tr></table>
+      ${slide.note ? `<p>${escapeHtml(slide.note)}</p>` : ''}
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'painpoint'){
+    const bullets = Array.isArray(slide.bullets) ? slide.bullets : [];
+    return `${wrapOpen}
+      <h2>${escapeHtml(slide.heading || '')}</h2>
+      <ul>${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'solution'){
+    const pairs = Array.isArray(slide.pairs) ? slide.pairs : [];
+    return `${wrapOpen}
+      <h2>${escapeHtml(slide.heading || '')}</h2>
+      <ul>${pairs.map(p => `<li>${escapeHtml(p.problem || '')} → ${escapeHtml(p.action || '')}</li>`).join('')}</ul>
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'plan306090'){
+    const phases = Array.isArray(slide.phases) ? slide.phases : [];
+    return `${wrapOpen}
+      <h2>${escapeHtml(slide.heading || '')}</h2>
+      <table><tr>${phases.map(p => `
+        <td style="width:${phases.length ? Math.floor(100/phases.length) : 100}%;vertical-align:top;padding:0 8pt 0 0;">
+          <h3>${escapeHtml(p.label || '')}</h3>
+          <ul>${(Array.isArray(p.bullets) ? p.bullets : []).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </td>`).join('')}</tr></table>
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  if (layout === 'proof'){
+    const cases = Array.isArray(slide.cases) ? slide.cases : [];
+    return `${wrapOpen}
+      <h2>${escapeHtml(slide.heading || '')}</h2>
+      ${cases.map(c => `<p><b>${escapeHtml(c.title || '')}</b>：${escapeHtml(c.result || '')}</p>`).join('')}
+      ${pageLabel}
+    ${wrapClose}`;
+  }
+  // 預設當作 bullets 版面
+  const bullets = Array.isArray(slide.bullets) ? slide.bullets : [];
+  return `${wrapOpen}
+    <h2>${escapeHtml(slide.heading || '')}</h2>
+    <ul>${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+    ${pageLabel}
+  ${wrapClose}`;
+}
+
+function downloadDeckWord(){
+  if (!lastResult7) return;
+  const deckTitle = typeof lastResult7.deckTitle === 'string' ? lastResult7.deckTitle : '提案簡報';
+  const slides = Array.isArray(lastResult7.slides) ? lastResult7.slides : [];
+  const bodyHtml = `
+    <h1>${escapeHtml(deckTitle)}</h1>
+    <p class="doc-meta">共 ${slides.length} 頁</p>
+    <hr>
+    ${slides.map((s, i) => buildSlideWordHtml(s, i, slides.length)).join('<hr>')}
+    <div class="doc-footer">本文件由 AI 依據原始履歷內容與職缺說明產生，正式送出前請自行核實所有內容是否正確；您可直接在 Word 中修改文字、字型與排版，或依此內容重新製作簡報。</div>
+  `;
+  const fileLabel = (deckTitle || '提案簡報').replace(/[\\/:*?"<>|]/g, '');
+  downloadWordDocument(`${fileLabel}`, deckTitle, bodyHtml);
+}
+
+function renderProposalDeck(parsed){
+  const deckTitle = typeof parsed.deckTitle === 'string' ? parsed.deckTitle : '提案簡報';
+  const slides = Array.isArray(parsed.slides) ? parsed.slides : [];
+
+  const panel = document.getElementById('resultsPanel7');
+  panel.classList.remove('empty');
+  panel.innerHTML = `
+    <div class="cta-row" style="margin-top:0;">
+      <button class="secondary" id="downloadSlidesBtn" type="button">📊 下載 PDF（開啟列印視窗，選擇「另存為 PDF」；建議在列印設定選擇「橫向」）</button>
+      <button class="secondary" id="downloadSlidesWordBtn" type="button">📝 下載 Word（.doc，可自行編輯）</button>
+    </div>
+    <p class="tool-note">《${escapeHtml(deckTitle)}》共 ${slides.length} 頁</p>
+    <div class="deck-theme-switch-wrap">
+      <span class="deck-theme-switch-label">更換版型（即時切換，不需重新產生）</span>
+      <div class="deck-theme-switch" id="deckThemeSwitch"></div>
+    </div>
+    <div class="slides-export theme-${selectedDeckTheme}" id="slidesExportArea">
+      ${slides.map((s, i) => `<div class="slide-page-wrap">${renderSlide(s, i, slides.length)}</div>`).join('')}
+    </div>
+  `;
+  document.getElementById('downloadSlidesBtn').addEventListener('click', () => printExportArea('slides'));
+  document.getElementById('downloadSlidesWordBtn').addEventListener('click', () => downloadDeckWord());
+  renderDeckThemePicker('deckThemeSwitch', 'switch');
+}
+
+/* =========================================================
+   共用：以瀏覽器原生列印機制輸出 PDF。
+   選擇這個做法而不是引入 PDF 產生函式庫（如 jsPDF）的原因：這類函式庫
+   內建字型不支援中文，要正確顯示中文必須額外嵌入中文字型檔（動輒數
+   MB），會讓單一 HTML 檔案暴增；改用瀏覽器原生列印，直接沿用畫面上
+   已經正確顯示的中文字型與排版，使用者在列印對話框選擇「另存為 PDF」
+   即可，不需要額外套件，中文顯示也絕對不會缺字。
+========================================================= */
+function printExportArea(mode){
+  const modeClass = mode === 'slides' ? 'printing-slides-mode' : 'printing-resume-mode';
+  const pageSizeStyle = document.getElementById('dynPageSizeStyle');
+  if (pageSizeStyle){
+    pageSizeStyle.textContent = mode === 'slides'
+      ? '@page{ size: landscape; margin: 10mm; }'
+      : '@page{ size: portrait; margin: 15mm 18mm; }';
+  }
+  document.body.classList.add(modeClass);
+  window.print();
+}
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-resume-mode', 'printing-slides-mode');
+});
+
+/* init */
+renderDeckThemePicker('deckTemplatePicker', 'pick');
+renderResumeThemePicker('resumeTemplatePicker', 'pick');
+updateAllButtonStates();
+checkForDraft();
+</script>
+</body>
+</html>
