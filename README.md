@@ -1,36 +1,85 @@
-# 職透 (JobSight) V3.3.22 — 後台管理功能部署說明
+# 職透 (JobSight) V3.3.43 — 後台管理功能部署說明
 
-## v3.3.22 更新重點：修復「按鈕點了沒反應」的重大臭蟲
-v3.3.21（及更早版本）有兩處程式碼完全沒有防護，只要其中任一狀況發生，就會讓整份 `index.html`
-唯一的 `<script>` 區塊在執行到一半時直接被 JavaScript 例外中斷，導致**該行之後所有還沒來得及
-註冊的按鈕事件（含 Google 登入按鈕本身）全部失效、點了毫無反應**：
+## v3.3.43 更新重點：不管有沒有登入，只要上傳履歷就記錄下來
 
-1. **pdf.js 初始化未防呆**：`pdfjsLib.GlobalWorkerOptions.workerSrc = ...` 這一行直接假設
-   pdf.js 的 CDN 腳本一定會成功載入。只要遇到廣告攔截器、瀏覽器隱私擴充功能、企業網路防火牆
-   濾掉 `cdnjs.cloudflare.com`，或 CDN 短暫不穩，`pdfjsLib` 就會是 `undefined`，這行會立刻
-   丟出例外，直接讓後面所有 `addEventListener`（拖拉上傳、每一顆「產生」按鈕、下載按鈕等）
-   都沒有機會被執行。
-2. **Google 登入（Netlify Identity）初始化未防呆**：`netlifyIdentity.init()` 在瀏覽器已有
-   快取登入狀態時，會依官方文件記載「同步」立刻觸發 `init` 事件；只要這個事件處理過程中
-   有任何一步出錯（例如 widget 腳本被瀏覽器擴充功能擋下、或 widget 本身既有的已知疊層錯誤），
-   例外一樣會直接中斷腳本，而且因為這段程式碼在檔案最前面執行，甚至連「使用 Google 帳號登入」
-   按鈕自己的點擊事件都還沒被綁定，所以看起來就是「登入按鈕點了完全沒反應」。
+### 為什麼要這樣改
+v3.3.42 修好後台「一律未登入」的臭蟲之後，你希望能進一步確認：**登入牆本身有沒有其他漏洞、
+能不能被繞過**。原本 `upload-resume.mjs` 的邏輯是「沒有有效登入身份就直接回傳 401、什麼都
+不記錄」——這代表萬一真的有人繞過前端登入牆去呼叫這支 API，後台反而完全看不到任何蛛絲馬跡。
 
-這兩個問題已對照 `hr-resume-matching-mvp`（PDF上傳資料正確穩定版）專案中同類型、已修復過的
-`pdf.js CDN-load crash guard` 與 `Netlify Identity` 防呆寫法，在 v3.3.22 中一併補上：
-- pdf.js 初始化改為 `typeof pdfjsLib !== 'undefined'` 判斷後才執行，載入失敗時只會停用
-  PDF 解析功能，不影響其他按鈕。
-- Google 登入初始化整段包進 `try/catch`，每個事件 callback 也各自有防護，任何一步出錯都只會
-  印出 console 錯誤、不會波及其他功能；同時補上 `open`/`close` 事件的疊層防呆（與已知的
-  `netlify-identity-widget #94 / #67` z-index 臭蟲相同修法），登入按鈕點擊時也一律會顯示
-  備援直接跳轉連結，不會再卡在「毫無反應」的狀態。
+### 這次改了什麼
+- `upload-resume.mjs`：不再因為沒有登入身份就拒絕存檔，改成**一律記錄**，並多存一個
+  `verified`（是否通過有效的 Google 登入）欄位，以及 IP、瀏覽器（User-Agent）、來源頁面
+  （Referer/Origin）等診斷資訊。
+- 前端 `uploadResumeToServer()`：不再「沒有登入 Token 就直接放棄上傳呼叫」，一律送出，
+  有 Token 就附上，沒有就讓後端標記為未驗證。
+- 後台管理畫面：新增一個獨立的「⚠️ 異常上傳」區塊，把 `verified:false` 的紀錄
+  （代表沒有通過登入驗證就成功上傳）跟正常使用者分開列出，附上 IP／瀏覽器／來源頁面，
+  方便你比對是否真的有人繞過登入牆，或找出前端判斷邏輯還有哪裡沒堵住。
+
+### 重要說明：這不是「降低安全性」
+- 下載、刪除履歷、讀取後台清單這幾個管理功能，**仍然**只有 `felix670131@gmail.com`
+  能用（`admin-data.mjs`、`admin-resume-file.mjs` 的權限檢查完全沒變）。
+- 放寬的只有「上傳履歷」這個單一動作的記錄方式，目的是把potentially 繞過登入牆的行為
+  「攤在陽光下」讓你看得到，而不是讓沒登入的人能存取別人的資料。
+- 如果後台的「⚠️ 異常上傳」區塊之後真的出現資料，代表登入牆確實有辦法被繞過，
+  屆時可以把對應的 IP／瀏覽器／來源頁面資訊交給我，我再往下追查前端登入判斷的漏洞。
+
+## v3.3.42 更新重點：修復後台管理一律顯示「讀取失敗：未登入」
+
+### 根本原因
+`netlify/functions/` 底下四支 function（`admin-data.mjs`、`record-login.mjs`、
+`upload-resume.mjs`、`admin-resume-file.mjs`）都是用新版（Modern / V2）的
+`export default async (req, context)` 簽章撰寫，但判斷登入者身份時卻用了：
+
+```js
+const user = context.clientContext && context.clientContext.user;
+```
+
+這是**舊版（Lambda-compatible / V1，`exports.handler = async (event, context)`）**
+才適用的寫法。Netlify 官方文件（[Use Identity in functions](https://docs.netlify.com/manage/security/secure-access-to-sites/identity/use-identity-in-functions/)）
+明確指出：V2 簽章下 `context.clientContext` **不會**自動帶入 Identity 使用者資料，
+新版 function 要改用 `@netlify/identity` 套件的 `getUser()`。
+
+也就是說：
+- 這**不是** session 過期、也**不是** Netlify 平台本身不穩定造成的偶發問題，而是每一次
+  呼叫都必然會回傳「未登入」的結構性問題——不管 Google 帳號有沒有登入成功、Token 新不新。
+- 除了後台管理讀不到資料以外，**每次登入的紀錄（`record-login`）與使用者上傳的履歷 PDF
+  備份（`upload-resume`）也同樣因為這個原因從未真正寫入過**，只是因為前端這兩支呼叫是
+  「不影響主要功能」的背景動作、失敗時只印 console，畫面上完全看不出來，所以先前沒被發現。
+
+### 修法
+四支 function 都改用官方建議的 `@netlify/identity` 的 `getUser()` 取得登入者：
+
+```js
+import { getUser } from '@netlify/identity';
+const user = await getUser(); // 自動讀取前端送來的 Authorization: Bearer <token>
+```
+
+並保留 `context.clientContext.user` 作為備援（`getUser()` 失敗或回傳空值時才會用到），
+避免未來 Netlify 行為再調整時，整個後台又無預警失效。
+
+`package.json` 已新增 `@netlify/identity` 相依套件，部署時 Netlify 會自動安裝，
+不需要手動處理。
+
+### 順便補上的防呆：自動重試一次
+後台管理面板呼叫 `admin-data` 若收到 401，前端會**自動用強制刷新過的 Netlify Identity
+Token 重試一次**，才會顯示「讀取失敗」。這是為了因應「Token 剛好在快過期的時間點被使用」
+這種單純的時間差狀況，讓管理者不必手動登出再登入。（這次的「未登入」本身跟 Token 過期
+無關，但這道防呆能避免以後真的遇到 Token 過期時又要重新走一次登入流程。）
+
+### 部署時請注意：避免互蓋檔案
+這次版本是獨立資料夾 `zhitou-jobsight-v3.3.42`，**不會**跟 v3.3.22 的檔案共用檔名之外的
+任何東西。部署時請用這個版本**完整取代**舊版的所有檔案（`index.html`、`netlify.toml`、
+`package.json`、整個 `netlify/functions/` 資料夾），不要只挑幾個檔案覆蓋，避免新舊版本的
+`package.json`（相依套件不同）或 functions 混在一起造成部署失敗或行為不一致。
 
 
 ## 這個壓縮檔裡有什麼
 ```
 index.html                          ← 主程式（原本的單一 HTML 檔，改名為 index.html）
 netlify.toml                        ← Netlify 建置設定（告訴 Netlify functions 資料夾在哪）
-package.json                        ← 宣告 @netlify/blobs 套件，部署時 Netlify 會自動安裝
+package.json                        ← 宣告 @netlify/blobs、@netlify/identity 套件，部署時 Netlify 會自動安裝
 netlify/functions/record-login.mjs        ← 記錄登入事件（姓名/email/IP/時間/瀏覽器）
 netlify/functions/upload-resume.mjs       ← 儲存使用者上傳的履歷 PDF 原始檔
 netlify/functions/admin-data.mjs          ← 後台管理讀取清單（僅 felix670131@gmail.com 可用）
@@ -38,16 +87,22 @@ netlify/functions/admin-resume-file.mjs   ← 後台下載／刪除單一份履�
 ```
 
 ## 部署步驟
-1. 把整個資料夾內容（含 `netlify` 資料夾）推到你原本的 GitHub repo，取代舊的檔案。
+1. 把整個資料夾內容（含 `netlify` 資料夾）推到你原本的 GitHub repo，**完整取代**舊版檔案
+   （見上方「避免互蓋檔案」說明）。
    - 如果你的 Netlify 網站原本是直接部署單一 HTML 檔（沒有用 GitHub），這次因為多了
      `netlify/functions` 資料夾，建議改成透過 GitHub repo 連接 Netlify 自動部署，
-     這樣 Netlify 才能正確安裝 `@netlify/blobs` 並部署這些後台功能。
-2. 部署完成後，不需要另外手動啟用 Netlify Blobs——只要有部署 Functions，Blobs 會自動可用，不需額外設定或額外費用（在一般用量下包含在 Netlify 的免費方案內）。
+     這樣 Netlify 才能正確安裝 `@netlify/blobs`、`@netlify/identity` 並部署這些後台功能。
+2. 部署完成後，不需要另外手動啟用 Netlify Blobs——只要有部署 Functions，Blobs 會自動可用，
+   不需額外設定或額外費用（在一般用量下包含在 Netlify 的免費方案內）。
 3. 確認 Site configuration → Identity 裡的 Google 登入設定維持原樣即可，不需要更動。
+4. 部署完成後，用 `felix670131@gmail.com` 重新登入一次（若瀏覽器已有舊的登入狀態，建議先
+   登出再重新登入一次，確保拿到的是新的 Token），再打開「後台管理」確認能正常讀到資料。
 
 ## 這次新增了什麼
-- 只要有人用 Google 帳號登入，就會自動記錄一筆：中文姓名、Email、IP、時間、瀏覽器。
-- 使用者上傳履歷 PDF 時，除了原本在瀏覽器內做文字解析外，也會把 PDF 原始檔另外存一份到 Netlify Blobs。
+- 只要有人用 Google 帳號登入，就會自動記錄一筆：中文姓名、Email、IP、時間、瀏覽器
+  （v3.3.42 前這個功能其實從未真正寫入成功，見上方「根本原因」說明）。
+- 使用者上傳履歷 PDF 時，除了原本在瀏覽器內做文字解析外，也會把 PDF 原始檔另外存一份到
+  Netlify Blobs（v3.3.42 前這個功能其實從未真正寫入成功，見上方「根本原因」說明）。
 - 當登入帳號是 **felix670131@gmail.com** 時，畫面右上角會多一個「後台管理」按鈕，
   點開後可以看到所有人的登入紀錄，並在對應的履歷欄位「下載」或「刪除」該份 PDF
   （刪除後會釋放 Netlify Blobs 空間，且無法復原）。
@@ -59,3 +114,5 @@ netlify/functions/admin-resume-file.mjs   ← 後台下載／刪除單一份履�
 - IP 位址是 Netlify 平台自動提供的來源 IP，若使用者是透過公司 VPN 或行動網路，看到的可能是共用 IP。
 - 目前登入紀錄與履歷索引各自存成一個 JSON 檔案，在使用量很大（例如上千筆同時寫入）時理論上有極小機率互相覆寫；以目前預期的使用規模不會有實際影響，但若未來使用者暴增，可以考慮改成每筆一個獨立檔案的結構。
 - 「中文姓名」欄位來自 Google 帳號本身填寫的姓名（`full_name`），如果使用者的 Google 帳號沒有填寫姓名，會顯示「（未提供）」。
+- v3.3.42 之前累積的登入紀錄與履歷備份，因為根本沒有寫入成功，Netlify Blobs 裡不會有任何
+  歷史資料可以救回；後台管理看到的資料會從這次部署後才開始累積。

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>職透 JobSight V3.3.22</title>
+<title>職透 JobSight V3.3.43</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -685,7 +685,7 @@
   <header>
     <div>
       <div class="eyebrow">求職前，先看懂這份職缺</div>
-      <h1>職透<span class="version-badge">V3.3.22</span></h1>
+      <h1>職透<span class="version-badge">V3.3.43</span></h1>
     </div>
     <div class="header-right">
       <div class="header-api-row">
@@ -991,15 +991,20 @@
 /* ---------- v3.3.21：Netlify Identity（Google 登入）門檻 + 後台管理 ----------
    v3.3.22：修復「登入按鈕點了沒反應、甚至所有按鈕都沒反應」的重大臭蟲，詳見下方兩處修改：
    (1) pdf.js 的 workerSrc 設定補上 typeof 防呆
-   (2) Google 登入初始化整段包 try/catch，並補上 open/close 事件的疊層防呆 ---------- */
+   (2) Google 登入初始化整段包 try/catch，並補上 open/close 事件的疊層防呆
+   v3.3.42：修復後台管理一律顯示「讀取失敗：未登入」的重大臭蟲。
+   根本原因在後端（見 netlify/functions/*.mjs 的說明），不是前端 session 或 Netlify
+   平台本身的問題；但既然後台的 401 有可能是憑證真的過期，這裡同時補上「自動用強制
+   刷新過的 Token 重試一次」的機制，避免未來遇到單純的 Token 過期時還要使用者手動
+   登出再登入。 ---------- */
 const ADMIN_EMAIL = 'felix670131@gmail.com';
 window.__zhitouCurrentUser = null;
 
-async function getIdentityToken(){
+async function getIdentityToken(forceRefresh){
   try {
     const user = window.netlifyIdentity && netlifyIdentity.currentUser();
     if (!user) return null;
-    const t = await user.jwt();
+    const t = await user.jwt(!!forceRefresh);
     return t;
   } catch (e) { console.error('取得登入憑證失敗', e); return null; }
 }
@@ -1016,8 +1021,10 @@ async function recordLoginEvent(){
 }
 
 async function uploadResumeToServer(file){
+  // v3.3.43：不管有沒有登入都照樣送出上傳紀錄，讓後台可以看到「繞過登入牆」的異常上傳。
+  // 有 token 就照樣附上（讓後端能對到正確的使用者），沒有 token 也繼續送，後端會標記
+  // 為未驗證身份，而不是直接放棄記錄。
   const token = await getIdentityToken();
-  if (!token) return;
   try {
     const buf = await file.arrayBuffer();
     let binary = '';
@@ -1027,9 +1034,11 @@ async function uploadResumeToServer(file){
       binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
     }
     const base64 = btoa(binary);
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     await fetch('/.netlify/functions/upload-resume', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ filename: file.name, base64 })
     });
   } catch (e) { console.error('履歷存檔失敗（不影響本次分析使用）', e); }
@@ -1114,24 +1123,38 @@ async function uploadResumeToServer(file){
 })();
 
 /* ---------- 後台管理（僅 ADMIN_EMAIL 可見） ---------- */
+// v3.3.42：抽出成獨立函式，並支援「強制刷新 Token 後重試」，供 openAdminPanel 在第一次
+// 拿到 401 時自動重試一次，不需要使用者手動登出再登入。
+async function fetchAdminData(forceRefresh){
+  const token = await getIdentityToken(forceRefresh);
+  if (!token) return { ok: false, status: 0, error: '無法取得登入憑證，請重新登入後再試。' };
+  const res = await fetch('/.netlify/functions/admin-data', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (!res.ok){
+    const e = await res.json().catch(() => ({}));
+    return { ok: false, status: res.status, error: e.error || String(res.status) };
+  }
+  return { ok: true, data: await res.json() };
+}
+
 async function openAdminPanel(){
   const modal = document.getElementById('adminModal');
   modal.style.display = 'flex';
   const body = document.getElementById('adminModalBody');
   body.innerHTML = '<p>載入中…</p>';
-  const token = await getIdentityToken();
-  if (!token){ body.innerHTML = '<p>無法取得登入憑證，請重新登入後再試。</p>'; return; }
   try {
-    const res = await fetch('/.netlify/functions/admin-data', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    if (!res.ok){
-      const e = await res.json().catch(() => ({}));
-      body.innerHTML = `<p>讀取失敗：${e.error || res.status}</p>`;
+    let result = await fetchAdminData(false);
+    // 401 有可能單純是 Token 快過期或剛好卡在刷新時間點，這裡自動用強制刷新過的
+    // Token 重試一次，避免使用者誤以為是帳號權限或系統問題。
+    if (!result.ok && result.status === 401){
+      result = await fetchAdminData(true);
+    }
+    if (!result.ok){
+      body.innerHTML = `<p>讀取失敗：${result.error}</p>`;
       return;
     }
-    const data = await res.json();
-    renderAdminPanel(data);
+    renderAdminPanel(result.data);
   } catch (e){
     console.error(e);
     body.innerHTML = '<p>讀取後台資料時發生錯誤。</p>';
@@ -1147,12 +1170,38 @@ function renderAdminPanel(data){
   const logins = data.logins || [];
   const resumes = data.resumes || [];
 
+  // v3.3.43：有些履歷可能是「verified: false」（沒有通過任何有效登入就上傳成功），
+  // 這種一定跟正常登入的使用者分開處理——不能只靠 email 分組，因為它們的 email
+  // 一律是後端寫死的「(未登入或身分不明)」，硬塞進登入紀錄的表格裡會誤導管理者。
+  const verifiedResumes = resumes.filter(r => r.verified !== false);
+  const anomalyResumes = resumes.filter(r => r.verified === false);
+
   const resumesByEmail = {};
-  resumes.forEach(r => {
+  verifiedResumes.forEach(r => {
     (resumesByEmail[r.email] = resumesByEmail[r.email] || []).push(r);
   });
 
-  let html = `<div class="admin-section-title">登入紀錄（共 ${logins.length} 筆，最新在最上）</div>`;
+  let html = '';
+
+  if (anomalyResumes.length){
+    html += `<div class="admin-section-title">⚠️ 異常上傳：沒有通過登入驗證卻成功上傳履歷（共 ${anomalyResumes.length} 筆，最新在最上）</div>`;
+    html += '<p class="desc" style="margin-top:-4px;">這些上傳請求沒有附上有效的 Google 登入憑證，理論上不應該發生；請比對下方 IP／瀏覽器／來源頁面，確認是否有人繞過登入牆，或前端登入判斷有其他漏洞。</p>';
+    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
+      '<th>時間</th><th>IP</th><th>瀏覽器</th><th>來源頁面</th><th>履歷 PDF</th>' +
+      '</tr></thead><tbody>';
+    anomalyResumes.forEach(r => {
+      html += `<tr>
+        <td>${escapeAdminHtml(formatAdminTime(r.time))}</td>
+        <td>${escapeAdminHtml(r.ip || '')}</td>
+        <td class="admin-ua">${escapeAdminHtml(r.browser || '')}</td>
+        <td class="admin-ua">${escapeAdminHtml(r.referer || '')}</td>
+        <td>${adminResumeCellHtml(r)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  html += `<div class="admin-section-title">登入紀錄（共 ${logins.length} 筆，最新在最上）</div>`;
   html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
     '<th>中文姓名</th><th>Email</th><th>IP</th><th>時間</th><th>瀏覽器</th><th>履歷 PDF</th>' +
     '</tr></thead><tbody>';

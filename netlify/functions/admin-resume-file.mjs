@@ -2,13 +2,28 @@
 // 職透 (JobSight) 後台管理功能 — 僅限管理者下載或刪除單一份履歷 PDF
 // GET  ?key=xxx  -> 下載該份 PDF
 // POST { action:'delete', key:'xxx' } -> 刪除該份 PDF（同時從索引移除，釋放 Netlify Blobs 空間）
+//
+// v3.3.42 修復：改用 @netlify/identity 的 getUser()，理由與 admin-data.mjs 相同。
 import { getStore } from '@netlify/blobs';
+import { getUser } from '@netlify/identity';
 
 const ADMIN_EMAIL = 'felix670131@gmail.com';
 const INDEX_KEY = 'resume-index.json';
 
+async function resolveIdentityUser(context) {
+  try {
+    const user = await getUser();
+    if (user && user.email) return user;
+  } catch (e) {
+    console.error('getUser() 失敗，改用備援方式判斷身份', e);
+  }
+  const legacyUser = context.clientContext && context.clientContext.user;
+  if (legacyUser && legacyUser.email) return legacyUser;
+  return null;
+}
+
 export default async (req, context) => {
-  const user = context.clientContext && context.clientContext.user;
+  const user = await resolveIdentityUser(context);
   if (!user || !user.email) {
     return new Response(JSON.stringify({ error: '未登入' }), { status: 401 });
   }
