@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>職透 JobSight V3.3.43</title>
+<title>職透 JobSight V3.3.44</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -152,7 +152,10 @@
     border:1px solid var(--ink-soft, #ddd); padding:6px 8px; text-align:left; vertical-align:top;
   }
   table.admin-table th{ background:rgba(0,0,0,0.04); }
-  .admin-ua{ max-width:220px; word-break:break-all; }
+  .admin-ua{
+    max-width:170px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    cursor:default;
+  }
   .admin-file-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
   .admin-file-row span:first-child{ max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .admin-file-meta{ color:var(--ink-soft, #999); font-size:11px; }
@@ -685,7 +688,7 @@
   <header>
     <div>
       <div class="eyebrow">求職前，先看懂這份職缺</div>
-      <h1>職透<span class="version-badge">V3.3.43</span></h1>
+      <h1>職透<span class="version-badge">V3.3.44</span></h1>
     </div>
     <div class="header-right">
       <div class="header-api-row">
@@ -1193,8 +1196,8 @@ function renderAdminPanel(data){
       html += `<tr>
         <td>${escapeAdminHtml(formatAdminTime(r.time))}</td>
         <td>${escapeAdminHtml(r.ip || '')}</td>
-        <td class="admin-ua">${escapeAdminHtml(r.browser || '')}</td>
-        <td class="admin-ua">${escapeAdminHtml(r.referer || '')}</td>
+        <td class="admin-ua">${adminUaCellHtml(r.browser)}</td>
+        <td class="admin-ua">${adminUrlCellHtml(r.referer)}</td>
         <td>${adminResumeCellHtml(r)}</td>
       </tr>`;
     });
@@ -1219,7 +1222,7 @@ function renderAdminPanel(data){
         <td>${escapeAdminHtml(l.email || '')}</td>
         <td>${escapeAdminHtml(l.ip || '')}</td>
         <td>${escapeAdminHtml(formatAdminTime(l.time))}</td>
-        <td class="admin-ua">${escapeAdminHtml(l.browser || '')}</td>
+        <td class="admin-ua">${adminUaCellHtml(l.browser)}</td>
         <td>${fileCell}</td>
       </tr>`;
     });
@@ -1247,6 +1250,36 @@ function adminResumeCellHtml(f){
 
 function escapeAdminHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// v3.3.44：後台管理表格的「瀏覽器」欄位改成顯示精簡摘要（瀏覽器名稱＋版本＋作業系統），
+// 不再把整串很長的 User-Agent 文字直接塞進表格造成版面被撐得很長；滑鼠移上去（title）
+// 仍可看到完整原始字串，需要時可以複製查證。
+function summarizeUserAgent(ua){
+  if (!ua) return '';
+  let browser = '瀏覽器不明';
+  let m;
+  if ((m = ua.match(/Edg\/([\d.]+)/))) browser = 'Edge ' + m[1].split('.')[0];
+  else if ((m = ua.match(/OPR\/([\d.]+)/))) browser = 'Opera ' + m[1].split('.')[0];
+  else if (/Chrome\//.test(ua) && (m = ua.match(/Chrome\/([\d.]+)/))) browser = 'Chrome ' + m[1].split('.')[0];
+  else if ((m = ua.match(/Firefox\/([\d.]+)/))) browser = 'Firefox ' + m[1].split('.')[0];
+  else if (/Safari\//.test(ua) && (m = ua.match(/Version\/([\d.]+)/))) browser = 'Safari ' + m[1].split('.')[0];
+
+  let os = '';
+  if (/iPhone|iPad/.test(ua)) os = 'iOS';
+  else if (/Windows NT/.test(ua)) os = 'Windows';
+  else if (/Macintosh/.test(ua)) os = 'Mac';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/Linux/.test(ua)) os = 'Linux';
+
+  return os ? `${browser} · ${os}` : browser;
+}
+function adminUaCellHtml(ua){
+  return `<span title="${escapeAdminHtml(ua || '')}">${escapeAdminHtml(summarizeUserAgent(ua))}</span>`;
+}
+// 「來源頁面」（Referer/Origin）通常是一整串網址，同樣用單行省略號顯示，
+// 完整網址放在 title 裡滑鼠移上去查看。
+function adminUrlCellHtml(url){
+  return `<span title="${escapeAdminHtml(url || '')}">${escapeAdminHtml(url || '')}</span>`;
 }
 function formatAdminTime(iso){
   if (!iso) return '';
