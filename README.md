@@ -1,4 +1,25 @@
-# 職透 (JobSight) V3.3.44 — 後台管理功能部署說明
+# 職透 (JobSight) V3.3.45 — 後台管理功能部署說明
+
+## v3.3.45 更新重點：移除「求職看板」功能模組，頁籤遞補
+
+### 為什麼要拿掉
+「求職看板」（投遞記錄看板＋拒絕原因回推分析）使用率不高，用途相對有限，維護成本卻不小
+（獨立的 window.storage 讀寫、看板卡片渲染、拒絕原因 AI 分析等一整套邏輯），因此這個版本
+決定整個模組拿掉，讓介面更聚焦在核心的履歷媒合／健診／模擬面試／客製履歷／提案簡報上。
+
+### 這次改了什麼
+- 移除頁籤「04 求職看板」，原本的「新增投遞記錄」表單、看板卡片（待投遞／已投遞／已回覆／
+  面試中／已offer／已婉拒 六欄）、以及「拒絕原因回推分析」全部移除。
+- 後續頁籤遞補：「05 客製履歷」→「04 客製履歷」、「06 提案簡報」→「05 提案簡報」，
+  對應的 HTML `id`（`t6`／`t7`）維持不變，只調整顯示的步驟數字與 tab 順序。
+- 移除「履歷媒合」結果頁的「加入求職看板」按鈕（原本會跳轉到看板頁籤並帶入職缺說明）。
+- 移除相關 JS：`renderBoard`／`loadBoardFromStorage`／`saveBoardToStorage`／
+  `getQualifyingEntries`／`runRejectionAnalysis`／`renderRejectionAnalysis` 等函式，
+  以及看板專用的 CSS（`.board-form`／`.board-cols`／`.board-col`／`.app-card` 等）。
+- 頁尾說明文字移除「求職看板的紀錄會保存在你自己的帳號空間」一句（該功能已不存在）。
+- 後端 Netlify functions（`record-login.mjs`／`admin-data.mjs`／`upload-resume.mjs`／
+  `admin-resume-file.mjs`）未受影響，看板資料原本就只存在使用者瀏覽器端的
+  `window.storage`（個人化儲存），不需要後端遷移或清資料的動作。
 
 ## v3.3.44 更新重點：後台管理表格「瀏覽器」欄位太長，撐爆版面
 

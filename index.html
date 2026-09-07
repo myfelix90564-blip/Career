@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>職透 JobSight V3.3.44</title>
+<title>職透 JobSight V3.3.45</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -525,7 +525,6 @@
     font-family:'JetBrains Mono', monospace; font-size:12.5px; padding:9px 14px; border-radius:10px; cursor:pointer;
   }
   button.secondary:hover{background:var(--ink); color:#fff;}
-  button.small-x{ background:none; border:none; color:var(--seal); cursor:pointer; font-size:16px; line-height:1; padding:2px 6px; }
 
   select{
     border:1px solid var(--line); background:var(--panel); color:var(--ink);
@@ -641,21 +640,6 @@
   .own-answer-block .own-answer-body{ margin-top:10px; }
 
   /* tab5 board */
-  .board-form{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:24px; }
-  @media (max-width:960px){ .board-form{grid-template-columns:1fr 1fr;} }
-  .board-form label{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-soft); display:block; margin-bottom:4px; }
-  .board-form input, .board-form select{ width:100%; padding:9px 10px; }
-  .board-cols{ display:grid; grid-template-columns:repeat(6,1fr); gap:12px; overflow-x:auto; }
-  @media (max-width:960px){ .board-cols{grid-template-columns:1fr; overflow-x:visible;} }
-  .board-col{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px; min-height:120px; }
-  .board-col-title{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:8px; text-transform:uppercase; }
-  .app-card{ background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; font-size:12.5px; position:relative; }
-  .app-card .company{ font-weight:700; font-size:13.5px; }
-  .app-card .role{ color:var(--ink-soft); margin-bottom:4px; }
-  .app-card .meta{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-soft); }
-  .app-card select{ width:100%; margin-top:6px; font-size:11.5px; padding:5px 6px; }
-  .app-card .del{ position:absolute; top:6px; right:6px; }
-  .app-card .flag{ display:inline-block; margin-top:6px; font-size:10.5px; color:var(--seal); font-family:'JetBrains Mono', monospace; }
 
   footer{ margin-top:40px; text-align:center; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-soft); line-height:1.8; }
 </style>
@@ -688,7 +672,7 @@
   <header>
     <div>
       <div class="eyebrow">求職前，先看懂這份職缺</div>
-      <h1>職透<span class="version-badge">V3.3.44</span></h1>
+      <h1>職透<span class="version-badge">V3.3.45</span></h1>
     </div>
     <div class="header-right">
       <div class="header-api-row">
@@ -749,9 +733,8 @@
     <button class="tab-btn active" data-tab="t1"><span class="step-num">01<span class="tab-dot" id="dot1"></span></span><span class="step-label">履歷媒合</span></button>
     <button class="tab-btn" data-tab="t2"><span class="step-num">02<span class="tab-dot" id="dot2"></span></span><span class="step-label">履歷健診</span></button>
     <button class="tab-btn" data-tab="t4"><span class="step-num">03<span class="tab-dot" id="dot4"></span></span><span class="step-label">模擬面試</span></button>
-    <button class="tab-btn" data-tab="t5"><span class="step-num">04</span><span class="step-label">求職看板</span></button>
-    <button class="tab-btn" data-tab="t6"><span class="step-num">05<span class="tab-dot" id="dot6"></span></span><span class="step-label">客製履歷</span></button>
-    <button class="tab-btn" data-tab="t7"><span class="step-num">06<span class="tab-dot" id="dot7"></span></span><span class="step-label">提案簡報</span></button>
+    <button class="tab-btn" data-tab="t6"><span class="step-num">04<span class="tab-dot" id="dot6"></span></span><span class="step-label">客製履歷</span></button>
+    <button class="tab-btn" data-tab="t7"><span class="step-num">05<span class="tab-dot" id="dot7"></span></span><span class="step-label">提案簡報</span></button>
   </nav>
 
   <!-- TAB 1: 履歷媒合 -->
@@ -814,48 +797,6 @@
     </div>
   </div>
 
-  <!-- TAB 5: 求職看板 -->
-  <div class="tab-panel" id="t5">
-    <div class="panel">
-      <div class="field-label"><span>新增一筆投遞記錄</span></div>
-      <div class="board-form">
-        <div><label>公司名稱</label><input type="text" id="fCompany" placeholder="公司名稱"></div>
-        <div><label>職稱</label><input type="text" id="fRole" placeholder="應徵職稱"></div>
-        <div><label>投遞日期</label><input type="date" id="fDate"></div>
-        <div><label>狀態</label>
-          <select id="fStatus">
-            <option value="待投遞">待投遞</option>
-            <option value="已投遞">已投遞</option>
-            <option value="已回覆">已回覆</option>
-            <option value="面試中">面試中</option>
-            <option value="已offer">已offer</option>
-            <option value="已婉拒">已婉拒</option>
-          </select>
-        </div>
-        <div><button class="primary" id="addEntryBtn" type="button">加入看板</button></div>
-      </div>
-      <div class="field-label"><span>職缺說明（選填，填寫後才能用於下方的卡關原因分析）</span></div>
-      <textarea id="fJobDesc" placeholder="選填。若從「履歷媒合」按加入看板會自動帶入；也可以自己貼上，之後才能一起分析卡關原因。" style="min-height:70px;"></textarea>
-      <div class="status-line" id="statusLine5"></div>
-    </div>
-
-    <div class="panel" style="margin-top:20px;">
-      <div class="field-label"><span>拒絕原因回推分析</span></div>
-      <p class="tool-note">分析「已婉拒」或「已投遞超過 10 天沒回應」、且有填寫職缺說明的紀錄，找出履歷與這些職缺之間可能重複出現的落差。這是根據書面資料做的推測，不是公司提供的真實理由。</p>
-      <div class="cta-row">
-        <button class="primary" id="analyzeRejectionBtn" disabled>分析卡關原因</button>
-        <span class="status-line" id="rejectionStatusLine"></span>
-      </div>
-    </div>
-    <div class="results-panel empty" id="rejectionResultsPanel">
-      <div class="placeholder"><span class="icon">🔍</span>累積至少 2 筆已婉拒／已投遞超過 10 天，且有填寫職缺說明的紀錄後，這裡會顯示可能的卡關模式與改善建議。</div>
-    </div>
-
-    <div class="results-panel" style="margin-top:22px;border:none;background:none;padding:0;">
-      <div class="board-cols" id="boardCols"></div>
-    </div>
-  </div>
-
   <!-- TAB 6: 客製履歷（原「健診新履歷」，改名更貼切：這是「針對此職缺重新編排的新履歷」，不是健診報告） -->
   <div class="tab-panel" id="t6">
     <div class="panel tool-panel">
@@ -900,7 +841,7 @@
   </div>
 
   <footer>
-    本工具會在你的瀏覽器內處理履歷內容以完成分析；為提供帳號紀錄與客服功能，你上傳的履歷 PDF 原始檔也會另外安全保存一份，僅網站管理者可查看。求職看板的紀錄會保存在你自己的帳號空間，其他人看不到。
+    本工具會在你的瀏覽器內處理履歷內容以完成分析；為提供帳號紀錄與客服功能，你上傳的履歷 PDF 原始檔也會另外安全保存一份，僅網站管理者可查看。
     <div class="debug-toggle-row footer-debug-toggle">
       <span class="footer-dev-info">開發者:游士賢　建議信箱:<a href="https://mail.google.com/mail/?view=cm&fs=1&to=felix670131@gmail.com&su=%E8%81%B7%E9%80%8F%E5%BB%BA%E8%AD%B0" target="_blank" rel="noopener noreferrer" style="color:inherit;">felix670131@gmail.com</a></span>
       <button class="ghost" id="debugToggleBtn" type="button">除錯模式</button>
@@ -1941,7 +1882,7 @@ const JSON_SAFETY_RULE = `JSON 格式安全規則：字串內容中一律使用�
    併發保護：所有會呼叫 AI 的按鈕共用同一把忙碌鎖，避免「一鍵產生
    全部」執行中又手動觸發個別分頁，造成重複呼叫、浪費 API 成本。
 ========================================================= */
-const AI_BUTTON_IDS = ['generateBtn1', 'generateBtn2', 'generateBtn4', 'runAllBtn', 'generateReverseBtn', 'analyzeRejectionBtn', 'generateBtn6', 'generateBtn7'];
+const AI_BUTTON_IDS = ['generateBtn1', 'generateBtn2', 'generateBtn4', 'runAllBtn', 'generateReverseBtn', 'generateBtn6', 'generateBtn7'];
 let activeRunCount = 0;
 
 function beginRun(){
@@ -1955,7 +1896,6 @@ function endRun(){
   activeRunCount = Math.max(0, activeRunCount - 1);
   if (activeRunCount === 0){
     updateAllButtonStates();
-    updateRejectionAnalysisButtonState();
   }
 }
 
@@ -2392,7 +2332,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 't5') renderBoard();
     refreshStaleIndicators();
   });
 });
@@ -2663,7 +2602,6 @@ function renderMatchResults(parsed){
         <div class="letter-actions">
           <button class="secondary" id="copyBtn">複製文字</button>
           <button class="secondary" id="downloadBtn">下載 .txt</button>
-          <button class="secondary" id="toBoardBtn">加入求職看板</button>
           <span class="char-count" id="letterCount">${coverLetter.length} 字</span>
         </div>
       </div>
@@ -2685,13 +2623,6 @@ function renderMatchResults(parsed){
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = '自我推薦信.txt'; a.click();
     URL.revokeObjectURL(url);
-  });
-  document.getElementById('toBoardBtn').addEventListener('click', () => {
-    document.querySelector('.tab-btn[data-tab="t5"]').click();
-    document.getElementById('fCompany').focus();
-    document.getElementById('fJobDesc').value = sharedJobDesc.value.trim();
-    document.getElementById('statusLine5').textContent = '已帶入職缺說明，請補上公司名稱與職稱後加入看板';
-    pendingNote = coverLetter.slice(0, 300);
   });
 }
 
@@ -3014,206 +2945,6 @@ function renderReverseInterview(parsed){
     <h2 class="section-title" style="margin-top:22px;">初步勝任度判斷</h2>
     <div class="competency-box">${escapeHtml(competencyAssessment)}</div>
   `;
-}
-
-/* =========================================================
-   TAB 5 — 求職看板（使用 window.storage 個人化儲存）
-========================================================= */
-const STATUS_LIST = ['待投遞','已投遞','已回覆','面試中','已offer','已婉拒'];
-let pendingNote = '';
-let boardCache = [];
-let boardLoaded = false;
-
-async function loadBoardFromStorage(){
-  try {
-    const result = await window.storage.get('applications', false);
-    boardCache = result && result.value ? JSON.parse(result.value) : [];
-  } catch (e){
-    boardCache = [];
-  }
-  boardLoaded = true;
-}
-
-async function saveBoardToStorage(){
-  try {
-    const result = await window.storage.set('applications', JSON.stringify(boardCache), false);
-    if (!result) throw new Error('儲存失敗');
-    return true;
-  } catch (e){
-    console.error(e);
-    document.getElementById('statusLine5').textContent = '儲存失敗，請稍後再試一次';
-    return false;
-  }
-}
-
-async function renderBoard(){
-  if (!boardLoaded) await loadBoardFromStorage();
-  const cols = document.getElementById('boardCols');
-  cols.innerHTML = STATUS_LIST.map(status => {
-    const items = boardCache.filter(a => a.status === status);
-    return `
-      <div class="board-col" data-status="${escapeHtml(status)}">
-        <div class="board-col-title">${escapeHtml(status)} (${items.length})</div>
-        <div class="col-items"></div>
-      </div>`;
-  }).join('');
-
-  STATUS_LIST.forEach(status => {
-    const colItems = cols.querySelector(`.board-col[data-status="${cssEscape(status)}"] .col-items`);
-    const items = boardCache.filter(a => a.status === status);
-    items.forEach(entry => {
-      const card = document.createElement('div');
-      card.className = 'app-card';
-      const days = entry.date ? Math.floor((Date.now() - new Date(entry.date).getTime()) / 86400000) : null;
-      const showFlag = entry.status === '已投遞' && days !== null && days >= 10;
-      card.innerHTML = `
-        <button class="del small-x" title="刪除">✕</button>
-        <div class="company">${escapeHtml(entry.company || '未命名公司')}</div>
-        <div class="role">${escapeHtml(entry.role || '')}</div>
-        <div class="meta">${entry.date ? escapeHtml(entry.date) : '未填日期'}${days !== null ? ' · 第 ' + days + ' 天' : ''}</div>
-        ${showFlag ? '<div class="flag">已投遞超過 10 天，建議追蹤進度</div>' : ''}
-        <select>${STATUS_LIST.map(s => `<option value="${escapeHtml(s)}" ${s===entry.status?'selected':''}>${escapeHtml(s)}</option>`).join('')}</select>
-      `;
-      card.querySelector('select').addEventListener('change', async (e) => {
-        entry.status = e.target.value;
-        await saveBoardToStorage();
-        renderBoard();
-      });
-      card.querySelector('.del').addEventListener('click', async () => {
-        boardCache = boardCache.filter(a => a.id !== entry.id);
-        await saveBoardToStorage();
-        renderBoard();
-      });
-      colItems.appendChild(card);
-    });
-  });
-
-  updateRejectionAnalysisButtonState();
-}
-
-function cssEscape(str){ return String(str).replace(/"/g,'\\"'); }
-
-document.getElementById('addEntryBtn').addEventListener('click', async () => {
-  const company = document.getElementById('fCompany').value.trim();
-  const role = document.getElementById('fRole').value.trim();
-  const date = document.getElementById('fDate').value;
-  const status = document.getElementById('fStatus').value;
-  const jobDesc = document.getElementById('fJobDesc').value.trim();
-  const statusLine = document.getElementById('statusLine5');
-
-  if (!company){
-    statusLine.textContent = '請至少填寫公司名稱';
-    return;
-  }
-  if (!boardLoaded) await loadBoardFromStorage();
-
-  boardCache.push({
-    id: 'app_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    company, role, date, status,
-    note: pendingNote || '',
-    jobDesc: jobDesc || ''
-  });
-  pendingNote = '';
-  const ok = await saveBoardToStorage();
-  statusLine.textContent = ok ? '已加入看板' : statusLine.textContent;
-  document.getElementById('fCompany').value = '';
-  document.getElementById('fRole').value = '';
-  document.getElementById('fDate').value = '';
-  document.getElementById('fStatus').value = '待投遞';
-  document.getElementById('fJobDesc').value = '';
-  renderBoard();
-});
-
-/* ---------- 拒絕原因回推分析 ---------- */
-function getQualifyingEntries(){
-  return boardCache.filter(e => {
-    if (!e.jobDesc || e.jobDesc.trim().length < 10) return false;
-    if (e.status === '已婉拒') return true;
-    if (e.status === '已投遞' && e.date){
-      const days = Math.floor((Date.now() - new Date(e.date).getTime()) / 86400000);
-      return days >= 10;
-    }
-    return false;
-  });
-}
-
-function updateRejectionAnalysisButtonState(){
-  const btn = document.getElementById('analyzeRejectionBtn');
-  const statusLine = document.getElementById('rejectionStatusLine');
-  if (!btn) return;
-  const qualifying = getQualifyingEntries();
-  btn.disabled = qualifying.length < 2;
-  if (qualifying.length < 2){
-    statusLine.classList.remove('err');
-    statusLine.textContent = `目前有 ${qualifying.length} 筆可分析的資料，至少需要 2 筆「已婉拒」或「已投遞超過 10 天」、且有填寫職缺說明的紀錄`;
-  } else if (!statusLine.textContent.includes('完成') && !statusLine.textContent.includes('正在')){
-    statusLine.textContent = `目前有 ${qualifying.length} 筆資料可用於分析`;
-  }
-}
-
-document.getElementById('analyzeRejectionBtn').addEventListener('click', runRejectionAnalysis);
-
-async function runRejectionAnalysis(){
-  const btn = document.getElementById('analyzeRejectionBtn');
-  const statusLine = document.getElementById('rejectionStatusLine');
-  const qualifying = getQualifyingEntries();
-  if (qualifying.length < 2){
-    statusLine.textContent = '資料還不夠，請先累積至少 2 筆符合條件的紀錄';
-    statusLine.classList.add('err');
-    return;
-  }
-  btn.disabled = true;
-  statusLine.classList.remove('err');
-  statusLine.innerHTML = '<span class="spinner"></span>AI 正在比對這些職缺與履歷的落差⋯';
-
-  const systemPrompt = `你是資深求職顧問。你會收到一份履歷全文，以及使用者投遞後「已婉拒」或「已投遞超過 10 天沒有回應」的多筆職缺說明。
-
-【重要限制】你並不知道公司真正的拒絕理由，這些企業從未告訴使用者為什麼沒有錄取。你只能根據「履歷內容」與「這些職缺說明」之間的落差，推測可能重複出現的原因。這是統計上的推測，不是確定的事實，用詞必須保持推測語氣（可能、值得留意、看起來、建議進一步確認），絕對不可以講得像是已經證實的結論，也不可以讓使用者覺得完全沒有希望。
-
-${HONESTY_RULE}
-
-請完成：
-1. patternSummary：用 2-4 句話，誠實地總結這些職缺與履歷之間「重複出現」的落差模式（如果每筆職缺的落差都不一樣、看不出重複模式，就誠實說看不出明顯的共同模式，不要硬湊一個）。
-2. commonGaps：3-6 項具體的重複落差，每項一句話，需要能同時對應到至少兩筆職缺，不可以只是單一職缺才有的問題。
-3. recommendations：3-5 條具體、可執行的建議，說明履歷可以怎麼調整、或投遞策略可以怎麼改變，才能提高下一輪的機會。
-
-${JSON_SAFETY_RULE}
-
-只能輸出一個 JSON 物件，不要任何其他文字、不要 markdown code fence，格式必須完全符合：
-{"patternSummary": "...", "commonGaps": ["..."], "recommendations": ["..."]}`;
-
-  const userContent = `【履歷內容】\n${resumeText}\n\n【投遞後未成功的職缺清單】\n` +
-    qualifying.map((e, i) => `職缺 ${i+1}（${e.company || '未命名公司'} - ${e.role || '未填職稱'}，狀態：${e.status}）：\n${e.jobDesc}`).join('\n\n');
-
-  try {
-    const parsed = await callClaude(systemPrompt, userContent, 18000, { label: 'rejectionAnalysis' });
-    renderRejectionAnalysis(parsed, qualifying.length);
-    statusLine.textContent = '完成';
-  } catch (err){
-    console.error(err);
-    statusLine.textContent = '發生錯誤：' + err.message + '，請再試一次';
-    statusLine.classList.add('err');
-  } finally {
-    endRun();
-  }
-}
-
-function renderRejectionAnalysis(parsed, sampleCount){
-  const patternSummary = typeof parsed.patternSummary === 'string' ? parsed.patternSummary : '';
-  const commonGaps = Array.isArray(parsed.commonGaps) ? parsed.commonGaps : [];
-  const recommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
-
-  const panel = document.getElementById('rejectionResultsPanel');
-  panel.classList.remove('empty');
-  panel.innerHTML = `
-    <p class="tool-note" style="margin-bottom:14px;">根據 ${sampleCount} 筆未成功的投遞紀錄推測（非公司提供的真實理由）：</p>
-    <div class="competency-box" style="margin-top:0;margin-bottom:18px;">${escapeHtml(patternSummary)}</div>
-    <div class="check-cols" style="grid-template-columns:1fr 1fr;">
-      <div><h2 class="section-title">重複出現的落差</h2>
-        <ul class="check-list">${commonGaps.length ? commonGaps.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>沒有看出明顯的重複模式</li>'}</ul></div>
-      <div><h2 class="section-title">建議下一步</h2>
-        <ul class="check-list">${recommendations.length ? recommendations.map(s=>`<li>${escapeHtml(s)}</li>`).join('') : '<li>暫無額外建議</li>'}</ul></div>
-    </div>`;
 }
 
 /* =========================================================
