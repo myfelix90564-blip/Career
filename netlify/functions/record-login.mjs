@@ -7,8 +7,12 @@
 // 這支 function 先前一樣是用 context.clientContext.user 判斷身份，在新版（V2）function
 // 簽章下必然拿不到使用者，導致「每一次登入都沒有真的被記錄下來」，後台看到的登入紀錄
 // 其實從未成功寫入過。
+//
+// v3.3.46 修復：「後台資料寫入沒有防止衝突，可能互蓋」——改用 mutateJsonWithRetry
+// 做條件式寫入＋重試，避免兩個人同時間登入時，其中一筆登入紀錄被另一筆覆蓋消失。
 import { getStore } from '@netlify/blobs';
 import { getUser } from '@netlify/identity';
+import { mutateJsonWithRetry } from '../lib/blob-json.mjs';
 
 const LOG_KEY = 'login-log.json';
 const MAX_RECORDS = 2000; // 避免無限成長，只保留最新 2000 筆
@@ -53,18 +57,10 @@ export default async (req, context) => {
 
   try {
     const store = getStore({ name: 'zhitou-admin', consistency: 'strong' });
-    let list = [];
-    try {
-      const existing = await store.get(LOG_KEY, { type: 'json' });
-      if (Array.isArray(existing)) list = existing;
-    } catch (e) {
-      // 第一次使用，還沒有任何紀錄，忽略讀取錯誤
-    }
-
-    list.unshift({ name, email, ip, browser, time });
-    if (list.length > MAX_RECORDS) list = list.slice(0, MAX_RECORDS);
-
-    await store.setJSON(LOG_KEY, list);
+    await mutateJsonWithRetry(store, LOG_KEY, (list) => {
+      const next = [{ name, email, ip, browser, time }, ...list];
+      return next.length > MAX_RECORDS ? next.slice(0, MAX_RECORDS) : next;
+    });
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (err) {
     console.error('record-login error', err);
