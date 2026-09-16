@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>職透 JobSight V3.3.62</title>
+<title>職透 JobSight V3.3.63</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -47,13 +47,20 @@
   }
   .wrap{max-width:1120px;margin:0 auto;}
 
+  /* v3.3.63 修復：原本用 align-items:flex-end（讓左右兩欄底部對齊）。這在右欄只有
+     一兩行內容時沒問題，但右欄後來陸續加了 API 狀態列、標語、快速跳轉連結，變成
+     3 段內容、比左欄（標語小字＋Logo，只有 2 段）高出不少；底部對齊的結果，是
+     左欄的 Logo 被往下推、才能讓兩欄的「底部」對齊，造成 Logo 看起來明顯比右欄
+     內容低、版面失衡，也讓整個 header 看起來比實際需要的還要高，把下面 STEP 1/2/3
+     的可用空間往下擠壓。改成 flex-start（兩欄頂端對齊），Logo 回到跟右欄頂端同高
+     的位置，header 整體高度也會自然收斂到剛好符合內容需要的高度。 */
   header{
     border-bottom:2px solid var(--ink);
     padding-bottom:22px;
     margin-bottom:var(--space-4);
     display:flex;
     justify-content:space-between;
-    align-items:flex-end;
+    align-items:flex-start;
     gap:20px;
     flex-wrap:wrap;
   }
@@ -96,12 +103,15 @@
     padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:13.5px; line-height:1.6;
     font-weight:600;
   }
+  /* v3.3.63 修復：原本 300px 的寬度上限太窄，讓這句標語被迫換成 3 行很短的句子，
+     看起來像被硬擠在一起。右欄本身其實有足夠寬度（跟上面那排 API 狀態列一樣寬），
+     放寬到 420px、行距也拉開一點，讓文字換行換得更自然、不擁擠。 */
   .tagline{
     font-family:'Noto Sans TC', sans-serif;
     color:var(--ink-soft);
     font-size:14px;
-    max-width:300px;
-    line-height:1.6;
+    max-width:420px;
+    line-height:1.7;
     text-align:right;
   }
   @media (max-width:640px){ .tagline{text-align:left; max-width:100%;} }
@@ -867,7 +877,7 @@
   <header>
     <div>
       <div class="eyebrow">求職前，先看懂這份職缺</div>
-      <h1>職透<span class="version-badge">V3.3.62</span></h1>
+      <h1>職透<span class="version-badge">V3.3.63</span></h1>
     </div>
     <div class="header-right">
       <div class="header-api-row">
