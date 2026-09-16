@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>職透 JobSight V3.3.61</title>
+<title>職透 JobSight V3.3.62</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -200,13 +200,26 @@
   }
   .user-status-pill #adminOpenBtn:hover{ background:var(--seal-dark); border-color:var(--seal-dark); }
   .admin-modal-box{
-    max-width:920px; width:95vw; max-height:85vh; overflow:hidden;
+    overflow:hidden;
     position:fixed; display:flex; flex-direction:column;
     min-width:340px; min-height:260px;
   }
-  /* v3.3.56 新增：後台管理浮動視窗改成可拖曳移動、可從右下角拖曳調整大小。
-     只針對後台管理這個視窗調整，API 金鑰設定視窗（.modal-box 但沒有 .admin-modal-box）
-     維持原本置中彈出、不可拖曳的樣子，不受影響。 */
+  /* v3.3.62 修復：後台管理視窗實際上一直被限制在最大 520px 寬、86vh 高，比想像中更窄。
+     原因是後台視窗的 HTML 同時掛了 .modal-box（給所有彈出視窗共用的基礎樣式，裡面
+     訂了 max-width:520px、max-height:86vh）跟 .admin-modal-box 這兩個 class。這兩條
+     規則的 CSS 選擇器「優先權」（specificity）完全相同，瀏覽器規則是優先權相同時
+     「後面宣告的規則獲勝」——而 .modal-box 剛好寫在 .admin-modal-box 後面，所以
+     max-width:520px 這條規則其實從頭到尾都在悄悄生效，v3.3.56 想放寬到 920px 的
+     設定根本沒真正起作用。加上拖曳調整大小功能上線後，使用者不管怎麼拖曳右下角
+     把手，視窗都被卡在 520px 寬，導致像登入紀錄這種欄位較多的表格，怎麼調整視窗
+     大小都看不到全部欄位。
+     這裡改用「.modal-box.admin-modal-box」這種同時寫兩個 class 的選擇器——優先權
+     比單一 class 選擇器更高，可以確保無論 CSS 規則先後順序為何，都一定會蓋掉
+     .modal-box 原本的 520px／86vh 限制，讓寬高完全交給 JS 決定（開啟時的預設大小、
+     拖曳調整大小時的即時上限），使用者可以把視窗拉到幾乎跟整個瀏覽器視窗一樣大。
+     只針對後台管理這個視窗調整，API 金鑰設定視窗（只有 .modal-box、沒有
+     .admin-modal-box）維持原本置中彈出、不可拖曳、520px 上限的樣子，不受影響。 */
+  .modal-box.admin-modal-box{ max-width:none; max-height:none; }
   #adminModal .modal-head{ cursor:move; user-select:none; flex:none; }
   #adminModal .desc{ flex:none; }
   #adminModalBody{ flex:1; overflow:auto; min-height:0; }
@@ -854,7 +867,7 @@
   <header>
     <div>
       <div class="eyebrow">求職前，先看懂這份職缺</div>
-      <h1>職透<span class="version-badge">V3.3.61</span></h1>
+      <h1>職透<span class="version-badge">V3.3.62</span></h1>
     </div>
     <div class="header-right">
       <div class="header-api-row">
