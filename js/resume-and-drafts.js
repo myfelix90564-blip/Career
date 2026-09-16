@@ -91,6 +91,13 @@ const DECK_THEMES = [
   { id:'techdark', name:'科技新創・暗黑霓虹', desc:'深色底＋亮色重點，適合科技業、新創、產品／設計職位', bg:'#12141A', fg:'#EDEDED', accent:'#3FD0FF' },
   { id:'swiss', name:'瑞士極簡・黑白網格', desc:'大量留白與黑白線條，適合設計、建築、精品等重視質感的產業', bg:'#ffffff', fg:'#0A0A0A', accent:'#0A0A0A' },
   { id:'sealgold', name:'東方雅緻・硃紅燙金', desc:'本站經典配色，沉穩內斂又帶點文化質感，適合傳產、文創、公部門', bg:'#F6F1E7', fg:'#1F2A3C', accent:'#9C7A3C' },
+  /* v3.3.64 新增：5 款新版型，延伸現有的排版結構（單欄／雙欄側邊／深色標題列），
+     只是換一組新的配色與強調色，涵蓋更多產業風格取向。 */
+  { id:'warmearth', name:'溫暖大地・沉穩磚紅', desc:'米杏底色＋磚紅強調色，溫暖親和又不失專業，適合服務業、餐旅、教育業', bg:'#FBF6F0', fg:'#3A2E26', accent:'#B5502F' },
+  { id:'forestgreen', name:'永續森林・墨綠雅致', desc:'白底＋沉穩墨綠，傳達永續、踏實的形象，適合農業、環境、社會企業、公益組織', bg:'#ffffff', fg:'#1F2E28', accent:'#2F6F4E' },
+  { id:'roseblush', name:'溫柔玫瑰・粉霧優雅', desc:'淺粉白底＋霧玫瑰紅強調色，柔和細膩，適合人資、美容美業、精品服務業', bg:'#FFF8F7', fg:'#3D2B2E', accent:'#B85C72' },
+  { id:'slatetech', name:'極簡石墨・冷調科技', desc:'比暗黑霓虹更內斂沉穩的深色版型，鋼藍強調色，適合硬體/資安/工程背景職位', bg:'#1A1D21', fg:'#E8E9EB', accent:'#5FA8D3' },
+  { id:'classicnavy', name:'學術經典・海軍藍金', desc:'海軍藍＋低調金色，嚴謹正式，適合學術、法務、政府部門、金融合規職位', bg:'#ffffff', fg:'#16213E', accent:'#C9A227' },
 ];
 let selectedDeckTheme = 'mckinsey';
 
@@ -103,6 +110,13 @@ const RESUME_THEMES = [
   { id:'techdark', name:'科技新創・深色標題列', desc:'頂部深色標題色塊＋亮色重點，年輕俐落，適合科技業、新創、產品／設計職位', layout:'darkband', bg:'#12141A', fg:'#EDEDED', accent:'#3FD0FF' },
   { id:'swiss', name:'瑞士極簡・網格線條', desc:'大量留白與黑白線條分隔，去除裝飾，適合設計、建築、精品等重視質感的產業', layout:'standard', bg:'#ffffff', fg:'#0A0A0A', accent:'#0A0A0A' },
   { id:'sealgold', name:'東方雅緻・硃紅燙金', desc:'本站經典配色，沉穩內斂又帶文化質感，適合傳產、文創、公部門', layout:'standard', bg:'#F6F1E7', fg:'#1F2A3C', accent:'#9C7A3C' },
+  /* v3.3.64 新增：5 款新版型，layout 沿用既有的三種排版結構（不新增排版邏輯，降低風險），
+     只是換一組新的配色，讓選擇更多元。 */
+  { id:'warmearth', name:'溫暖大地・沉穩磚紅', desc:'米杏底色＋磚紅強調色，溫暖親和又不失專業，適合服務業、餐旅、教育業', layout:'standard', bg:'#FBF6F0', fg:'#3A2E26', accent:'#B5502F' },
+  { id:'forestgreen', name:'永續森林・墨綠雅致', desc:'左側聯絡資訊＋技能欄的雙欄結構，沉穩墨綠強調色，適合農業、環境、社會企業、公益組織', layout:'sidebar', bg:'#ffffff', fg:'#1F2E28', accent:'#2F6F4E' },
+  { id:'roseblush', name:'溫柔玫瑰・粉霧優雅', desc:'淺粉白底＋霧玫瑰紅強調色，柔和細膩，適合人資、美容美業、精品服務業', layout:'standard', bg:'#FFF8F7', fg:'#3D2B2E', accent:'#B85C72' },
+  { id:'slatetech', name:'極簡石墨・冷調科技', desc:'比暗黑霓虹更內斂沉穩的深色標題列版型，鋼藍強調色，適合硬體/資安/工程背景職位', layout:'darkband', bg:'#1A1D21', fg:'#E8E9EB', accent:'#5FA8D3' },
+  { id:'classicnavy', name:'學術經典・海軍藍金', desc:'雙欄側邊結構，海軍藍＋低調金色，嚴謹正式，適合學術、法務、政府部門、金融合規職位', layout:'sidebar', bg:'#ffffff', fg:'#16213E', accent:'#C9A227' },
 ];
 let selectedResumeTheme = 'mckinsey';
 

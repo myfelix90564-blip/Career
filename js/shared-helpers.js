@@ -97,7 +97,16 @@ function escapeHtml(str){
    文件（字型、段落、清單、表格都可用 Word 工具列調整），求職者可以
    自行微調文字、格式，不受限於本工具產生的排版。
 ========================================================= */
-function buildWordDocument(titleText, bodyHtml){
+/* v3.3.64 修復：這裡原本完全沒有接收版型參數，不管使用者在畫面上選了哪一種履歷／簡報
+   版型，Word 下載出來的顏色、強調色一律套用同一組寫死的顏色（#10151F 文字、#5B4FE0
+   標題底線），跟畫面上實際顯示、也跟 PDF 下載出來的樣子完全對不上——PDF 下載走的是
+   「直接列印目前畫面」，本來就會忠實呈現目前選的版型；Word 下載卻是另外產生一份
+   全新的 HTML 文件，這份文件從頭到尾沒有讀取 selectedResumeTheme／selectedDeckTheme
+   這兩個變數，等於白選了版型。這裡改成接收一個 theme 參數，套用該版型實際的
+   背景色／文字色／強調色，讓 Word 下載的顏色跟畫面上選的版型一致。 */
+function buildWordDocument(titleText, bodyHtml, theme){
+  const t = theme || { bg:'#ffffff', fg:'#10151F', accent:'#5B4FE0' };
+  const mutedColor = mixHexTowardGray(t.fg, 0.45);
   return `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
@@ -115,21 +124,21 @@ function buildWordDocument(titleText, bodyHtml){
 <style>
   @page Section1 { size: 21cm 29.7cm; margin: 2cm 2cm 2cm 2cm; mso-header-margin:1cm; mso-footer-margin:1cm; }
   div.Section1 { page: Section1; }
-  body{ font-family:'Microsoft JhengHei','PMingLiU','Noto Sans TC',Arial,sans-serif; font-size:11pt; color:#10151F; line-height:1.6; }
-  h1{ font-size:20pt; margin:0 0 4pt; color:#10151F; }
-  h2{ font-size:13pt; margin:16pt 0 6pt; padding-bottom:3pt; border-bottom:1pt solid #5B4FE0; color:#10151F; }
-  h3{ font-size:11.5pt; margin:10pt 0 2pt; color:#10151F; }
+  body{ font-family:'Microsoft JhengHei','PMingLiU','Noto Sans TC',Arial,sans-serif; font-size:11pt; color:${t.fg}; background:${t.bg}; line-height:1.6; }
+  h1{ font-size:20pt; margin:0 0 4pt; color:${t.fg}; }
+  h2{ font-size:13pt; margin:16pt 0 6pt; padding-bottom:3pt; border-bottom:1.5pt solid ${t.accent}; color:${t.fg}; }
+  h3{ font-size:11.5pt; margin:10pt 0 2pt; color:${t.fg}; }
   p{ margin:0 0 6pt; }
   ul{ margin:2pt 0 8pt; padding-left:20pt; }
   li{ margin:0 0 3pt; }
   table{ border-collapse:collapse; width:100%; margin:0 0 2pt; }
   td{ vertical-align:top; padding:0; }
-  .doc-muted{ color:#69707E; font-size:9.5pt; }
-  .doc-meta{ color:#69707E; font-size:10pt; margin:0 0 12pt; }
-  .doc-tag{ display:inline-block; border:0.75pt solid #69707E; padding:1pt 6pt; margin:0 6pt 4pt 0; font-size:9.5pt; }
-  .doc-footer{ margin-top:16pt; padding-top:6pt; border-top:0.75pt solid #E2E5EA; font-size:9pt; color:#69707E; }
+  .doc-muted{ color:${mutedColor}; font-size:9.5pt; }
+  .doc-meta{ color:${mutedColor}; font-size:10pt; margin:0 0 12pt; }
+  .doc-tag{ display:inline-block; border:0.75pt solid ${t.accent}; color:${t.fg}; padding:1pt 6pt; margin:0 6pt 4pt 0; font-size:9.5pt; }
+  .doc-footer{ margin-top:16pt; padding-top:6pt; border-top:0.75pt solid ${mutedColor}; font-size:9pt; color:${mutedColor}; }
   .doc-pagebreak{ page-break-before:always; mso-page-break-before:always; }
-  hr{ border:none; border-top:0.75pt solid #E2E5EA; margin:10pt 0; }
+  hr{ border:none; border-top:0.75pt solid ${mutedColor}; margin:10pt 0; }
 </style>
 </head>
 <body>
@@ -140,8 +149,25 @@ ${bodyHtml}
 </html>`;
 }
 
-function downloadWordDocument(filename, titleText, bodyHtml){
-  const fullHtml = buildWordDocument(titleText, bodyHtml);
+/* v3.3.64 新增：Word 文件裡的輔助說明文字（doc-muted／doc-meta／頁尾分隔線）不能直接用
+   版型的主文字色（對比太強、像在強調不重要的資訊），但也不能寫死一個固定的灰色（深色
+   版型like techdark用深灰色會完全看不見）。這裡寫一個簡單的函式，把版型的文字顏色跟
+   「中性灰」以指定比例混合，讓輔助文字的顏色會依據淺色/深色版型自動變成偏灰或偏淺灰，
+   但不會失去可讀性。 */
+function mixHexTowardGray(hex, ratio){
+  const clean = String(hex || '#666666').replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+  const r = parseInt(full.substring(0, 2), 16) || 0;
+  const g = parseInt(full.substring(2, 4), 16) || 0;
+  const b = parseInt(full.substring(4, 6), 16) || 0;
+  const gray = 128;
+  const mix = (c) => Math.round(c + (gray - c) * ratio);
+  const toHex = (v) => v.toString(16).padStart(2, '0');
+  return '#' + toHex(mix(r)) + toHex(mix(g)) + toHex(mix(b));
+}
+
+function downloadWordDocument(filename, titleText, bodyHtml, theme){
+  const fullHtml = buildWordDocument(titleText, bodyHtml, theme);
   const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

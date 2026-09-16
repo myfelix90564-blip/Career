@@ -193,7 +193,8 @@ function downloadResumeWord(){
   const certifications = Array.isArray(lastResult6.certifications) ? lastResult6.certifications : [];
   const bodyHtml = buildResumeWordHtml({ name, targetTitle, contactLine, summary, coreSkills, experience, education, certifications });
   const fileLabel = (name || '客製履歷').replace(/[\\/:*?"<>|]/g, '');
-  downloadWordDocument(`${fileLabel}_客製履歷`, `${name} 客製履歷`, bodyHtml);
+  const theme = RESUME_THEMES.find(t => t.id === selectedResumeTheme) || RESUME_THEMES[0];
+  downloadWordDocument(`${fileLabel}_客製履歷`, `${name} 客製履歷`, bodyHtml, theme);
 }
 
 function renderTailoredResume(parsed){

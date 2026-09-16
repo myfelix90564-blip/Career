@@ -320,7 +320,8 @@ function downloadDeckWord(){
     <div class="doc-footer">本文件由 AI 依據原始履歷內容與職缺說明產生，正式送出前請自行核實所有內容是否正確；您可直接在 Word 中修改文字、字型與排版，或依此內容重新製作簡報。</div>
   `;
   const fileLabel = (deckTitle || '提案簡報').replace(/[\\/:*?"<>|]/g, '');
-  downloadWordDocument(`${fileLabel}`, deckTitle, bodyHtml);
+  const theme = DECK_THEMES.find(t => t.id === selectedDeckTheme) || DECK_THEMES[0];
+  downloadWordDocument(`${fileLabel}`, deckTitle, bodyHtml, theme);
 }
 
 function renderProposalDeck(parsed){
