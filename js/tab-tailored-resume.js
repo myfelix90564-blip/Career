@@ -63,6 +63,7 @@ async function runTailoredResume(){
     statusLine.textContent = '完成，可預覽並下載 PDF';
     jobDescSnapshot[6] = snapshotKeyAtRequestTime;
     setTabDot(6, 'done');
+    updateStepMeta(6, parsed.__meta || null);
     refreshStaleIndicators();
     lastResult6 = parsed;
     saveDraft();
@@ -71,6 +72,7 @@ async function runTailoredResume(){
     console.error(err);
     statusLine.textContent = friendlyErrorMessage(err);
     statusLine.classList.add('err');
+    updateStepMeta(6, { failed: true });
     return false;
   } finally {
     endRun();

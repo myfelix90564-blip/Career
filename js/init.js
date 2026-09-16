@@ -16,5 +16,10 @@
 /* init */
 renderDeckThemePicker('deckTemplatePicker', 'pick');
 renderResumeThemePicker('resumeTemplatePicker', 'pick');
+/* v3.3.58 新增：職缺說明欄位現在預設就帶有一份範例內容（方便使用者直接體驗），
+   原本的字數顯示只在使用者「輸入」時才更新，頁面剛載入、使用者還沒打字之前會
+   一直顯示錯誤的「0 字」。這裡在初始化時就先算一次正確的字數。若之後
+   checkForDraft() 復原了草稿內容，applyDraft() 本身也會再更新一次，不會衝突。 */
+document.getElementById('jdCountShared').textContent = document.getElementById('sharedJobDesc').value.length + ' 字';
 updateAllButtonStates();
 checkForDraft();

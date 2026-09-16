@@ -14,6 +14,22 @@
    100% 相同。載入順序很重要，請維持 index.html 裡目前的 <script src> 排列順序。
 ========================================================================= */
 /* ---------- tabs ---------- */
+/* v3.3.60 新增：每個頁籤（01~05）自己產生完成後，在頁籤下方顯示這一次花了多少秒、
+   用了多少 tokens，失敗則顯示 ✗。取代原本擠在「一鍵產生」按鈕下方、把三個頁籤結果
+   混在同一行難以拆解的長文字說明。tabNum 對應的是 data-tab 的數字（1/2/4/6/7，
+   跟既有的 tab-dot id 用同一套編號，不是畫面上 01~05 的顯示順序）。 */
+function updateStepMeta(tabNum, meta){
+  const el = document.getElementById('stepMeta' + tabNum);
+  if (!el) return;
+  if (!meta){ el.textContent = ''; el.classList.remove('err'); return; }
+  if (meta.failed){ el.textContent = '✗ 失敗'; el.classList.add('err'); return; }
+  el.classList.remove('err');
+  const sec = Math.max(0, Math.round((meta.durationMs || 0) / 1000));
+  const tokens = meta.tokensUsed || 0;
+  const tokensDisplay = tokens >= 1000 ? (tokens / 1000).toFixed(1) + 'k' : String(tokens);
+  el.textContent = (meta.tokensExact === false ? '約' : '') + sec + 's · ' + tokensDisplay + ' tokens';
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -121,8 +137,12 @@ async function runAll(){
       '模擬面試題目' + (results.interviewSetup ? '✓' : '✗')
     ];
     const allOk = results.match && results.healthcheck && results.interviewSetup;
-    const totalElapsedSec = fmtSec(Date.now() - runStartedAt);
-    statusLine.textContent = (allOk ? '全部完成：' : '部分完成（失敗的可到該頁籤重試）：') + parts.join('　') + '　共花費 ' + totalElapsedSec + ' 秒，實際使用 tokens ' + (anyEstimated ? '約 ' : '') + cumulativeTokens.toLocaleString();
+    /* v3.3.60 修復：原本這裡會把 3 個頁籤的花費時間、tokens 全部加總成一行長文字
+       （例如「共花費 30 秒，實際使用 tokens 11,286」），使用者要自己在心裡拆解才知道
+       「到底是哪個頁籤花了多少」。現在改成每個頁籤各自在自己的頁籤下方顯示自己的花費
+       時間與 tokens（見 updateStepMeta()），這裡只保留簡短的完成度摘要，並指向上方
+       頁籤看詳情。 */
+    statusLine.textContent = (allOk ? '全部完成：' : '部分完成（失敗的可到該頁籤重試）：') + parts.join('　') + '　詳細花費時間與 tokens 請見上方各頁籤';
     statusLine.classList.toggle('err', !allOk);
   } finally {
     endRun();

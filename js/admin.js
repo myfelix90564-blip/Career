@@ -29,9 +29,90 @@ async function fetchAdminData(forceRefresh){
   return { ok: true, data: await res.json() };
 }
 
+/* =========================================================
+   v3.3.56 新增：後台管理浮動視窗可以拖曳移動，也可以從右下角的把手拖曳調整大小。
+   只作用在 #adminModal 這個視窗，不影響 API 金鑰設定視窗（沿用原本置中彈出、
+   不可拖曳的樣子）。用 pointerdown/pointermove/pointerup（同時支援滑鼠、觸控、
+   觸控筆），並在拖曳／調整大小時做邊界限制，避免視窗被拖出畫面外或縮到看不見。
+========================================================= */
+let adminModalDragBound = false;
+
+function clampNum(val, min, max){ return Math.max(min, Math.min(max, val)); }
+
+function setupAdminModalDragAndResize(){
+  if (adminModalDragBound) return; // 只需要綁定一次事件，之後每次開啟面板重複使用
+  adminModalDragBound = true;
+
+  const box = document.querySelector('#adminModal .admin-modal-box');
+  const head = box.querySelector('.modal-head');
+  const resizeHandle = box.querySelector('.admin-modal-resize-handle');
+  if (!box || !head || !resizeHandle) return;
+
+  head.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.modal-close')) return; // 點到關閉按鈕時不要觸發拖曳
+    e.preventDefault();
+    const rect = box.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    head.setPointerCapture(e.pointerId);
+
+    function onMove(ev){
+      const maxLeft = Math.max(0, window.innerWidth - box.offsetWidth);
+      const maxTop = Math.max(0, window.innerHeight - box.offsetHeight);
+      box.style.left = clampNum(ev.clientX - offsetX, 0, maxLeft) + 'px';
+      box.style.top = clampNum(ev.clientY - offsetY, 0, maxTop) + 'px';
+    }
+    function onUp(){
+      head.removeEventListener('pointermove', onMove);
+      head.removeEventListener('pointerup', onUp);
+    }
+    head.addEventListener('pointermove', onMove);
+    head.addEventListener('pointerup', onUp);
+  });
+
+  resizeHandle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // 避免同時被上面 head 的拖曳邏輯誤觸發
+    const startX = e.clientX, startY = e.clientY;
+    const startWidth = box.offsetWidth, startHeight = box.offsetHeight;
+    const boxLeft = box.getBoundingClientRect().left;
+    const boxTop = box.getBoundingClientRect().top;
+    resizeHandle.setPointerCapture(e.pointerId);
+
+    function onMove(ev){
+      const minWidth = 340, minHeight = 260;
+      const maxWidth = Math.max(minWidth, window.innerWidth - boxLeft - 10);
+      const maxHeight = Math.max(minHeight, window.innerHeight - boxTop - 10);
+      box.style.width = clampNum(startWidth + (ev.clientX - startX), minWidth, maxWidth) + 'px';
+      box.style.height = clampNum(startHeight + (ev.clientY - startY), minHeight, maxHeight) + 'px';
+    }
+    function onUp(){
+      resizeHandle.removeEventListener('pointermove', onMove);
+      resizeHandle.removeEventListener('pointerup', onUp);
+    }
+    resizeHandle.addEventListener('pointermove', onMove);
+    resizeHandle.addEventListener('pointerup', onUp);
+  });
+}
+
+/* 每次開啟面板都重設回預設的置中位置與大小，不記憶上次拖曳的結果——避免視窗
+   曾經被拖到某個位置後，下次在不同螢幕尺寸下開啟時卡在畫面外看不到的邊緣情況。 */
+function resetAdminModalPositionAndSize(){
+  const box = document.querySelector('#adminModal .admin-modal-box');
+  if (!box) return;
+  const width = Math.min(920, window.innerWidth * 0.95);
+  const height = Math.min(window.innerHeight * 0.85, 720);
+  box.style.width = width + 'px';
+  box.style.height = height + 'px';
+  box.style.left = Math.max(0, (window.innerWidth - width) / 2) + 'px';
+  box.style.top = Math.max(0, (window.innerHeight - height) / 2) + 'px';
+}
+
 async function openAdminPanel(){
   const modal = document.getElementById('adminModal');
   modal.style.display = 'flex';
+  resetAdminModalPositionAndSize();
+  setupAdminModalDragAndResize();
   const body = document.getElementById('adminModalBody');
   body.innerHTML = '<p>載入中…</p>';
   try {

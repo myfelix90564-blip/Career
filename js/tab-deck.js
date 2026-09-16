@@ -91,6 +91,7 @@ async function runProposalDeck(){
     statusLine.textContent = '完成（共 ' + slides.length + ' 頁），可預覽、更換版型並下載 PDF';
     jobDescSnapshot[7] = snapshotKeyAtRequestTime;
     setTabDot(7, 'done');
+    updateStepMeta(7, parsed.__meta || null);
     refreshStaleIndicators();
     lastResult7 = parsed;
     saveDraft();
@@ -99,6 +100,7 @@ async function runProposalDeck(){
     console.error(err);
     statusLine.textContent = friendlyErrorMessage(err);
     statusLine.classList.add('err');
+    updateStepMeta(7, { failed: true });
     return false;
   } finally {
     endRun();

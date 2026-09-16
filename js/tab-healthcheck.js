@@ -58,6 +58,7 @@ ${JSON_SAFETY_RULE}
     refreshStaleIndicators();
     lastResult2 = parsed;
     rmStageStats.healthcheck = parsed.__meta || null;
+    updateStepMeta(2, parsed.__meta || null);
     saveDraft();
     return true;
   } catch (err){
@@ -65,6 +66,7 @@ ${JSON_SAFETY_RULE}
     statusLine.textContent = friendlyErrorMessage(err);
     statusLine.classList.add('err');
     rmStageStats.healthcheck = { tokensUsed: 0, failed: true };
+    updateStepMeta(2, { failed: true });
     return false;
   } finally {
     endRun();

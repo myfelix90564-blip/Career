@@ -106,6 +106,7 @@ async function uploadResumeToServer(file){
     pill.innerHTML = '';
     window.__zhitouCurrentUser = null;
   }
+
   // 每一個 widget callback 都各自包一層 try/catch：單一事件處理失敗時只印出錯誤，
   // 不會讓例外往外傳播、波及呼叫端（netlify-identity-widget 內部）的其餘執行流程。
   function safe(fn){

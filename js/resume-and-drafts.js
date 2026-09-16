@@ -217,6 +217,19 @@ function scheduleDraftSave(){
   saveDraftTimer = setTimeout(saveDraft, 800);
 }
 
+/* v3.3.57 修復（根本原因）：這裡原本用的是 window.storage.get/set/delete，這其實是
+   Claude.ai 的 Artifact 沙盒環境才有提供的專屬 API，不是瀏覽器原生支援的標準功能。
+   這個工具本來就是要部署成一般網站（Netlify）給任何人用一般瀏覽器開啟，一旦不是在
+   Claude.ai 的 Artifact 預覽畫面裡執行，window.storage 根本不存在，呼叫
+   window.storage.set(...) 一定會直接丟出「Cannot read properties of undefined」
+   之類的例外。這正是 v3.3.53 加上的「自動存檔失敗」警示會一開啟就跳出來的根本原因——
+   不是那次修的邏輯有問題，而是它正確地把這個從一開始就存在、只是先前被靜默吞掉的
+   真正問題揭露出來了。
+   修法：改用瀏覽器原生就有的 localStorage，是所有瀏覽器都支援的標準 API，資料會留在
+   使用者自己的瀏覽器裡（不會上傳到任何伺服器），行為上等同於原本 window.storage
+   想做到的事情——重新整理頁面、甚至關閉分頁再打開，都能讀回上次的內容。 */
+const DRAFT_STORAGE_KEY = 'zhitou_jobsight_draft';
+
 async function saveDraft(){
   try {
     const draft = {
@@ -233,7 +246,7 @@ async function saveDraft(){
       reverse: lastResultReverse.value ? { parsed: lastResultReverse.value, snapshotKey: jobDescSnapshotReverse.value } : null,
       savedAt: new Date().toISOString()
     };
-    await window.storage.set('draft', JSON.stringify(draft), false);
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
     /* v3.3.53 修復：存檔成功時，如果之前顯示過失敗警示，這裡要記得收回去，避免使用者
        明明已經恢復正常，畫面卻一直卡著舊的警示訊息。 */
     const warningEl = document.getElementById('draftSaveWarning');
@@ -252,8 +265,8 @@ async function saveDraft(){
 async function checkForDraft(){
   let draft = null;
   try {
-    const result = await window.storage.get('draft', false);
-    if (result && result.value) draft = JSON.parse(result.value);
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (raw) draft = JSON.parse(raw);
   } catch (e){
     draft = null;
   }
@@ -274,7 +287,7 @@ function showDraftBanner(draft){
   }, { once: true });
   document.getElementById('dismissDraftBtn').addEventListener('click', async () => {
     banner.style.display = 'none';
-    try { await window.storage.delete('draft', false); } catch (e){}
+    try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch (e){}
   }, { once: true });
 }
 
@@ -299,12 +312,14 @@ function applyDraft(draft){
     lastResult1 = draft.tab1.parsed;
     jobDescSnapshot[1] = draft.tab1.snapshotKey;
     setTabDot(1, 'done');
+    updateStepMeta(1, draft.tab1.parsed.__meta || null);
   }
   if (draft.tab2 && draft.tab2.parsed){
     renderHealthCheck(draft.tab2.parsed);
     lastResult2 = draft.tab2.parsed;
     jobDescSnapshot[2] = draft.tab2.snapshotKey;
     setTabDot(2, 'done');
+    updateStepMeta(2, draft.tab2.parsed.__meta || null);
   }
   if (draft.tab4 && draft.tab4.parsed){
     const questions = Array.isArray(draft.tab4.parsed.questions) ? draft.tab4.parsed.questions : [];
@@ -312,6 +327,7 @@ function applyDraft(draft){
     lastResult4 = draft.tab4.parsed;
     jobDescSnapshot[4] = draft.tab4.snapshotKey;
     setTabDot(4, 'done');
+    updateStepMeta(4, draft.tab4.parsed.__meta || null);
   }
   if (draft.reverse && draft.reverse.parsed){
     renderReverseInterview(draft.reverse.parsed);
@@ -324,6 +340,7 @@ function applyDraft(draft){
     lastResult6 = draft.tab6.parsed;
     jobDescSnapshot[6] = draft.tab6.snapshotKey;
     setTabDot(6, 'done');
+    updateStepMeta(6, draft.tab6.parsed.__meta || null);
   }
   renderResumeThemePicker('resumeTemplatePicker', 'pick');
   const dt7ExtraContextEl = document.getElementById('dt7ExtraContext');
@@ -334,6 +351,7 @@ function applyDraft(draft){
     lastResult7 = draft.tab7.parsed;
     jobDescSnapshot[7] = draft.tab7.snapshotKey;
     setTabDot(7, 'done');
+    updateStepMeta(7, draft.tab7.parsed.__meta || null);
   }
   renderDeckThemePicker('deckTemplatePicker', 'pick');
 
@@ -484,6 +502,41 @@ function detectResumeFileKind(file){
    （使用者選的最後一個檔案，才是真正想要的那一個）。 */
 let fileUploadSeq = 0;
 
+/* v3.3.57 修復：原本用 content.items.map(it => it.str).join(' ') 把 pdf.js 擷取出來的
+   每一小段文字直接用空白字元接起來。這對「一個 item 就是一整個英文單字」的 PDF 沒問題，
+   但很多 PDF（尤其是中文內容，或某些履歷產生工具匯出的檔案）會把「每一個字」都存成
+   單獨一個 item，這樣不分青紅皂白地每個 item 中間都塞一個空白，結果就是「個 人 資 料」
+   這種每個字之間都被空一格的擷取結果，讀起來很奇怪，也可能讓 AI 分析時多花不必要的
+   token 去理解這些其實不存在的空格。
+   改成依照每個文字片段實際的座標位置判斷：只有當前後兩個片段之間「真的有明顯間隔」
+   （例如一個英文單字跟下一個單字之間），才補上空白；同一行內間隔很小（例如中文
+   PDF 逐字排列）就直接接起來、不加空白；偵測到 Y 座標换行則換行。 */
+function joinPdfTextItems(items){
+  let result = '';
+  let lastItem = null;
+  for (const item of items){
+    const str = item.str || '';
+    if (!str){ continue; } // pdf.js 有時會給空字串的定位標記，跳過即可
+    if (lastItem){
+      const lastY = lastItem.transform[5];
+      const curY = item.transform[5];
+      const sameLine = Math.abs(curY - lastY) < Math.max(2, (item.height || 10) * 0.4);
+      if (!sameLine){
+        result += '\n';
+      } else {
+        const lastEndX = lastItem.transform[4] + (lastItem.width || 0);
+        const curStartX = item.transform[4];
+        const gap = curStartX - lastEndX;
+        const spaceThreshold = Math.max(1.5, (item.height || lastItem.height || 10) * 0.28);
+        if (gap > spaceThreshold) result += ' ';
+      }
+    }
+    result += str;
+    lastItem = item;
+  }
+  return result;
+}
+
 async function handleFile(file){
   const mySeq = ++fileUploadSeq;
   const kind = detectResumeFileKind(file);
@@ -509,7 +562,7 @@ async function handleFile(file){
       for (let i = 1; i <= pdf.numPages; i++){
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        text += content.items.map(it => it.str).join(' ') + '\n';
+        text += joinPdfTextItems(content.items) + '\n';
       }
       fileMetaLabel = `${pdf.numPages} 頁 · `;
     } else {
