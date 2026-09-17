@@ -1,9 +1,9 @@
 {
-  "name": "zhitou-jobsight-backend",
+  "name": "lifecompass",
+  "version": "3.4.22",
   "private": true,
-  "version": "3.3.45",
+  "description": "人生羅盤 LifeCompass - Netlify 部署套件",
   "dependencies": {
-    "@netlify/blobs": "^10.0.0",
-    "@netlify/identity": "^1.2.0"
+    "@netlify/blobs": "*"
   }
 }
